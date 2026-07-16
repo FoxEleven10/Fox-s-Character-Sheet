@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивный Лист Персонажа</title>
+    <style>
+        :root {
+            --bg-color: #f4eae1;
+            --card-bg: #fdfaf6;
+            --text-color: #2c1b18;
+            --accent-color: #8c2d19;
+            --accent-hover: #b53f27;
+            --border-color: #d1bfa7;
+            --shadow-color: rgba(44, 27, 24, 0.1);
+            --success-color: #2e7d32;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1513;
+            --card-bg: #26201e;
+            --text-color: #ede3dc;
+            --accent-color: #d95336;
+            --accent-hover: #ff7354;
+            --border-color: #4a3b37;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --success-color: #4caf50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px double var(--accent-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* Панель синхронизации с GitHub */
+        .sync-panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+        }
+
+        .sync-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .sync-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sync-content {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .sync-content.active {
+            display: grid;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        input, select, textarea {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-color);
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+            color: var(--bg-color);
+        }
+
+        /* Макет листа персонажа */
+        .char-sheet {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .char-sheet {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+            letter-spacing: 0.5px;
+        }
+
+        .header-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-block {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            background-color: var(--bg-color);
+        }
+
+        .stat-name {
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: bold;
+            width: 70px;
+            text-align: center;
+            margin: 5px auto;
+            border: none;
+            background: transparent;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .stat-mod {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .combat-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .combat-block {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px 5px;
+            text-align: center;
+        }
+
+        .combat-val {
+            font-size: 1.5rem;
+            font-weight: bold;
+            width: 100%;
+            text-align: center;
+            border: none;
+            background: transparent;
+        }
+
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Лист Персонажа RPG</h1>
+        <button class="theme-toggle" id="themeToggle">Тёмная тема</button>
+    </header>
+
+    <div class="sync-panel">
+        <div class="sync-header" id="syncHeader">
+            <span class="sync-title">⚙️ Настройка синхронизации с GitHub</span>
+            <span id="syncStatus" style="font-size: 0.9rem; color: var(--accent-color);">Локальный режим (без облака)</span>
+        </div>
+        <div class="sync-content" id="syncContent">
+            <div class="form-group">
+                <label for="ghUser">Пользователь GitHub</label>
+                <input type="text" id="ghUser" placeholder="username">
+            </div>
+            <div class="form-group">
+                <label for="ghRepo">Имя репозитория</label>
+                <input type="text" id="ghRepo" placeholder="rpg-character-sheet">
+            </div>
+            <div class="form-group">
+                <label for="ghToken">Личный токен доступа (PAT)</label>
+                <input type="password" id="ghToken" placeholder="github_pat_...">
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+                <button class="btn" id="saveSettingsBtn" style="padding: 8px 12px;">Сохранить настройки</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="char-sheet">
+        <aside class="card">
+            <h2 class="card-title">Характеристики</h2>
+            <div class="stats-grid">
+                <div class="stat-block">
+                    <span class="stat-name">Сила (STR)</span>
+                    <input type="number" class="stat-val" id="stat-str" value="10" min="1" max="30">
+                    <div class="stat-mod" id="mod-str">+0</div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-name">Ловкость (DEX)</span>
+                    <input type="number" class="stat-val" id="stat-dex" value="10" min="1" max="30">
+                    <div class="stat-mod" id="mod-dex">+0</div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-name">Телосложение (CON)</span>
+                    <input type="number" class="stat-val" id="stat-con" value="10" min="1" max="30">
+                    <div class="stat-mod" id="mod-con">+0</div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-name">Интеллект (INT)</span>
+                    <input type="number" class="stat-val" id="stat-int" value="10" min="1" max="30">
+                    <div class="stat-mod" id="mod-int">+0</div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-name">Мудрость (WIS)</span>
+                    <input type="number" class="stat-val" id="stat-wis" value="10" min="1" max="30">
+                    <div class="stat-mod" id="mod-wis">+0</div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-name">Харизма (CHA)</span>
+                    <input type="number" class="stat-val" id="stat-cha" value="10" min="1" max="30">
+                    <div class="stat-mod" id="mod-cha">+0</div>
+                </div>
+            </div>
+        </aside>
+
+        <main style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="card">
+                <h2 class="card-title">Информация</h2>
+                <div class="header-info">
+                    <div class="form-group">
+                        <label for="charName">Имя персонажа</label>
+                        <input type="text" id="charName" value="Новый Герой">
+                    </div>
+                    <div class="form-group">
+                        <label for="charClass">Класс</label>
+                        <input type="text" id="charClass" placeholder="Рыцарь, Чародей...">
+                    </div>
+                    <div class="form-group">
+                        <label for="charLevel">Уровень</label>
+                        <input type="number" id="charLevel" value="1" min="1">
+                    </div>
+                </div>
+
+                <div class="combat-stats">
+                    <div class="combat-block">
+                        <label>Класс Брони (AC)</label>
+                        <input type="number" class="combat-val" id="charAC" value="10">
+                    </div>
+                    <div class="combat-block">
+                        <label>Здоровье (HP)</label>
+                        <input type="number" class="combat-val" id="charHP" value="10">
+                    </div>
+                    <div class="combat-block">
+                        <label>Скорость</label>
+                        <input type="number" class="combat-val" id="charSpeed" value="30">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="charInventory">Снаряжение и Сумка</label>
+                    <textarea id="charInventory" rows="4" placeholder="Предметы, оружие..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="charNotes">Предыстория и Союзники</label>
+                    <textarea id="charNotes" rows="4" placeholder="Ваша легенда..."></textarea>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn" id="saveCloudBtn">☁️ Сохранить на GitHub</button>
+                    <button class="btn btn-secondary" id="loadCloudBtn">🔄 Загрузить с GitHub</button>
+                    <button class="btn btn-secondary" id="downloadBtn">💾 Скачать .JSON</button>
+                    <button class="btn btn-secondary" id="uploadBtn">📂 Выбрать файл</button>
+                    <input type="file" id="localFileInput" accept=".json" style="display: none;">
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div class="toast" id="toast">Уведомление</div>
+
+<script>
+    // --- Системные настройки (Тема оформления) ---
+    let theme = localStorage.getItem('theme') || 'light';
+    if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('themeToggle').innerText = 'Светлая тема';
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            document.getElementById('themeToggle').innerText = 'Тёмная тема';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            document.getElementById('themeToggle').innerText = 'Светлая тема';
+        }
+    });
+
+    // --- Математика характеристик d20 ---
+    const stats = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+    function updateModifiers() {
+        stats.forEach(stat => {
+            const val = parseInt(document.getElementById(`stat-${stat}`).value) || 10;
+            const mod = Math.floor((val - 10) / 2);
+            document.getElementById(`mod-${stat}`).innerText = mod >= 0 ? `+${mod}` : `${mod}`;
+        });
+    }
+    stats.forEach(stat => {
+        document.getElementById(`stat-${stat}`).addEventListener('input', updateModifiers);
+    });
+    updateModifiers();
+
+    // --- Переключение настроек GitHub ---
+    const syncHeader = document.getElementById('syncHeader');
+    const syncContent = document.getElementById('syncContent');
+    syncHeader.addEventListener('click', () => {
+        syncContent.classList.toggle('active');
+    });
+
+    function loadSyncSettings() {
+        const settings = JSON.parse(localStorage.getItem('github_sync_settings') || '{}');
+        if (settings.user) document.getElementById('ghUser').value = settings.user;
+        if (settings.repo) document.getElementById('ghRepo').value = settings.repo;
+        if (settings.token) document.getElementById('ghToken').value = settings.token;
+        updateSyncStatus();
+    }
+
+    function updateSyncStatus() {
+        const user = document.getElementById('ghUser').value;
+        const repo = document.getElementById('ghRepo').value;
+        const token = document.getElementById('ghToken').value;
+        const statusEl = document.getElementById('syncStatus');
+
+        if (user && repo && token) {
+            statusEl.innerText = '☁️ Готов к синхронизации';
+            statusEl.style.color = 'var(--success-color)';
+        } else {
+            statusEl.innerText = 'Локальный режим (без облака)';
+            statusEl.style.color = 'var(--accent-color)';
+        }
+    }
+
+    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+        const settings = {
+            user: document.getElementById('ghUser').value.trim(),
+            repo: document.getElementById('ghRepo').value.trim(),
+            token: document.getElementById('ghToken').value.trim()
+        };
+        localStorage.setItem('github_sync_settings', JSON.stringify(settings));
+        showToast('Конфигурация GitHub сохранена локально!');
+        syncContent.classList.remove('active');
+        updateSyncStatus();
+    });
+
+    loadSyncSettings();
+
+    // --- Сбор данных с полей ---
+    function getCharacterJSON() {
+        const charData = {
+            name: document.getElementById('charName').value,
+            class: document.getElementById('charClass').value,
+            level: parseInt(document.getElementById('charLevel').value) || 1,
+            ac: parseInt(document.getElementById('charAC').value) || 10,
+            hp: parseInt(document.getElementById('charHP').value) || 10,
+            speed: parseInt(document.getElementById('charSpeed').value) || 30,
+            stats: {},
+            inventory: document.getElementById('charInventory').value,
+            notes: document.getElementById('charNotes').value
+        };
+        stats.forEach(stat => {
+            charData.stats[stat] = parseInt(document.getElementById(`stat-${stat}`).value) || 10;
+        });
+        return charData;
+    }
+
+    // --- Импорт данных в поля ---
+    function setCharacterFields(data) {
+        if (!data) return;
+        if (data.name) document.getElementById('charName').value = data.name;
+        if (data.class) document.getElementById('charClass').value = data.class;
+        if (data.level) document.getElementById('charLevel').value = data.level;
+        if (data.ac) document.getElementById('charAC').value = data.ac;
+        if (data.hp) document.getElementById('charHP').value = data.hp;
+        if (data.speed) document.getElementById('charSpeed').value = data.speed;
+        
+        if (data.stats) {
+            stats.forEach(stat => {
+                if (data.stats[stat] !== undefined) {
+                    document.getElementById(`stat-${stat}`).value = data.stats[stat];
+                }
+            });
+        }
+        if (data.inventory !== undefined) document.getElementById('charInventory').value = data.inventory;
+        if (data.notes !== undefined) document.getElementById('charNotes').value = data.notes;
+        
+        updateModifiers();
+        saveToLocalStorage();
+    }
+
+    // --- Локальное автосохранение ---
+    function saveToLocalStorage() {
+        localStorage.setItem('current_character', JSON.stringify(getCharacterJSON()));
+    }
+    
+    document.querySelectorAll('.char-sheet input, .char-sheet textarea').forEach(el => {
+        el.addEventListener('input', saveToLocalStorage);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const localChar = localStorage.getItem('current_character');
+        if (localChar) {
+            try { setCharacterFields(JSON.parse(localChar)); } catch(e) { console.error(e); }
+        }
+    });
+
+    function showToast(text) {
+        const toast = document.getElementById('toast');
+        toast.innerText = text;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    // --- Локальные файлы ---
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+        const data = getCharacterJSON();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${data.name.toLowerCase().replace(/\s+/g, '_')}_sheet.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Файл .JSON скачан!');
+    });
+
+    const fileInput = document.getElementById('localFileInput');
+    document.getElementById('uploadBtn').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                setCharacterFields(JSON.parse(evt.target.result));
+                showToast('Лист импортирован!');
+            } catch (err) {
+                alert('Неверный формат файла!');
+            }
+        };
+        reader.readAsText(file);
+        fileInput.value = '';
+    });
+
+    // --- РАБОТА С GITHUB API (СОХРАНЕНИЕ / ЗАГРУЗКА) ---
+    async function getGitSettings() {
+        const settings = JSON.parse(localStorage.getItem('github_sync_settings') || '{}');
+        if (!settings.user || !settings.repo || !settings.token) {
+            showToast('⚠️ Настройте параметры GitHub в меню сверху!');
+            syncContent.classList.add('active');
+            return null;
+        }
+        return settings;
+    }
+
+    // Запись на GitHub (PUT)
+    document.getElementById('saveCloudBtn').addEventListener('click', async () => {
+        const settings = await getGitSettings();
+        if (!settings) return;
+
+        const characterData = getCharacterJSON();
+        const charFileName = `${characterData.name.toLowerCase().trim().replace(/\s+/g, '_')}.json`;
+        const url = `https://api.github.com/repos/${settings.user}/${settings.repo}/contents/database/${charFileName}`;
+        
+        showToast('Идёт отправка на GitHub...');
+
+        // Кодирование с поддержкой кириллицы (UTF-8)
+        const utf8Bytes = new TextEncoder().encode(JSON.stringify(characterData, null, 2));
+        const base64Content = btoa(String.fromCharCode(...utf8Bytes));
+
+        let currentSha = null;
+
+        // Пытаемся получить текущий SHA файла, если он уже есть
+        try {
+            const checkRes = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${settings.token}` }
+            });
+            if (checkRes.ok) {
+                const fileMeta = await checkRes.json();
+                currentSha = fileMeta.sha;
+            }
+        } catch (e) {
+            console.log('Новый файл. Создаем.');
+        }
+
+        const body = {
+            message: `Save character sheet: ${characterData.name}`,
+            content: base64Content
+        };
+        if (currentSha) body.sha = currentSha;
+
+        try {
+            const saveRes = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${settings.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (saveRes.ok) {
+                showToast('🎉 Персонаж успешно сохранен в ваш репозиторий!');
+            } else {
+                const errJson = await saveRes.json();
+                alert('Ошибка GitHub API: ' + (errJson.message || 'Проверьте токен и права доступа'));
+            }
+        } catch (error) {
+            alert('Сетевая ошибка соединения с GitHub');
+        }
+    });
+
+    // Чтение с GitHub (GET)
+    document.getElementById('loadCloudBtn').addEventListener('click', async () => {
+        const settings = await getGitSettings();
+        if (!settings) return;
+
+        const charName = document.getElementById('charName').value;
+        const charFileName = `${charName.toLowerCase().trim().replace(/\s+/g, '_')}.json`;
+        
+        // Предотвращаем кэширование при повторном чтении с помощью timestamp (?t=...)
+        const rawUrl = `https://raw.githubusercontent.com/${settings.user}/${settings.repo}/main/database/${charFileName}?t=${Date.now()}`;
+
+        showToast('Загрузка с GitHub...');
+
+        try {
+            const res = await fetch(rawUrl);
+            if (!res.ok) {
+                throw new Error(`Персонаж database/${charFileName} не найден. Проверьте правильность написания имени.`);
+            }
+            const data = await res.json();
+            setCharacterFields(data);
+            showToast('🎉 Лист персонажа успешно импортирован!');
+        } catch (e) {
+            alert(e.message);
+        }
+    });
+</script>
+</body>
+</html>
