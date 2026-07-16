@@ -1,625 +1,2965 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Интерактивный Лист Персонажа</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Классический заполняемый лист персонажа</title>
+    <style>
+        /* ===== Reset & Variables ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f5f0eb;
+            --card: #fefcf8;
+            --text: #2c1b18;
+            --accent: #8c2d19;
+            --accent-hover: #b53f27;
+            --border: #ccc3b8;
+            --shadow: rgba(44, 27, 24, 0.08);
+            --input-bg: #f9f6f2;
+            --grid-color: rgba(200, 190, 180, 0.25);
+            --proficiency-color: #8c2d19;
+            --success: #2e7d32;
+            --radius: 8px;
+            --font-serif: 'Georgia', 'Times New Roman', serif;
+            --font-sans: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            --transition: 0.2s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1513;
+            --card: #26201e;
+            --text: #ede3dc;
+            --accent: #d95336;
+            --accent-hover: #ff7354;
+            --border: #4a3b37;
+            --shadow: rgba(0, 0, 0, 0.4);
+            --input-bg: #2f2825;
+            --grid-color: rgba(255, 255, 255, 0.06);
+            --proficiency-color: #d95336;
+            --success: #4caf50;
+        }
+
+        /* ===== Base ===== */
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            padding: 20px;
+            transition: background var(--transition), color var(--transition);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        /* ===== Typography ===== */
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: var(--font-serif);
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        /* ===== Header ===== */
+        .page-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 24px;
+            gap: 12px;
+        }
+
+        .page-header h1 {
+            font-size: 1.6rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rule-toggle {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .rule-toggle button {
+            background: transparent;
+            border: none;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            transition: background var(--transition), color var(--transition);
+            font-family: var(--font-sans);
+            opacity: 0.6;
+        }
+        .rule-toggle button.active {
+            background: var(--accent);
+            color: #fff;
+            opacity: 1;
+        }
+        .rule-toggle button:not(.active):hover {
+            background: var(--border);
+            opacity: 0.8;
+        }
+
+        .header-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: var(--font-sans);
+        }
+        .header-btn:hover {
+            background: var(--border);
+        }
+        .header-btn .icon {
+            font-size: 1.1rem;
+        }
+
+        .theme-toggle-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+        }
+        .theme-toggle-btn:hover {
+            background: var(--border);
+        }
+
+        /* ===== Sync Panel ===== */
+        .sync-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 6px var(--shadow);
+        }
+        .sync-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .sync-title {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sync-status {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        .sync-content {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed var(--border);
+        }
+        .sync-content.active {
+            display: grid;
+        }
+        .sync-content .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .sync-content label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.7;
+            letter-spacing: 0.5px;
+        }
+        .sync-content input {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            outline: none;
+            font-family: var(--font-sans);
+        }
+        .sync-content input:focus {
+            border-color: var(--accent);
+        }
+
+        /* ===== Grid Layout ===== */
+        .sheet-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 992px) {
+            .sheet-grid {
+                grid-template-columns: 320px 1fr 280px;
+            }
+            .col-center {
+                order: 2;
+            }
+            .col-right {
+                order: 3;
+            }
+            .col-left {
+                order: 1;
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 991px) {
+            .sheet-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .col-left {
+                grid-column: 1 / 2;
+            }
+            .col-center {
+                grid-column: 2 / 3;
+            }
+            .col-right {
+                grid-column: 1 / 3;
+            }
+        }
+
+        /* ===== Cards ===== */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            box-shadow: 0 2px 6px var(--shadow);
+            transition: background var(--transition), border var(--transition);
+        }
+
+        .card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 6px;
+            margin-bottom: 14px;
+            font-family: var(--font-sans);
+        }
+
+        /* ===== Passport ===== */
+        .passport-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 16px;
+        }
+        .passport-grid .full-width {
+            grid-column: 1 / -1;
+        }
+        .passport-grid .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .passport-grid label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.6;
+            letter-spacing: 0.5px;
+        }
+        .passport-grid input,
+        .passport-grid textarea {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            outline: none;
+            font-family: var(--font-sans);
+            transition: border var(--transition);
+            width: 100%;
+        }
+        .passport-grid input:focus,
+        .passport-grid textarea:focus {
+            border-color: var(--accent);
+        }
+        .passport-grid textarea {
+            resize: vertical;
+            min-height: 50px;
+            font-size: 0.85rem;
+        }
+
+        .passport-level {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 6px;
+        }
+        .level-circle {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 3px solid var(--accent);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--input-bg);
+            flex-shrink: 0;
+        }
+        .level-circle .lvl-num {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            line-height: 1;
+        }
+        .level-circle .lvl-label {
+            font-size: 0.5rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            opacity: 0.5;
+            letter-spacing: 0.5px;
+        }
+        .level-xp-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .level-xp-group label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+        .level-xp-group input {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            outline: none;
+            width: 100%;
+            font-family: var(--font-sans);
+        }
+        .level-xp-group input:focus {
+            border-color: var(--accent);
+        }
+
+        /* ===== Combat Stats ===== */
+        .combat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .combat-block {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px 14px;
+        }
+        .combat-block .label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.6;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .combat-block .value-large {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            padding: 0;
+            text-align: center;
+        }
+        .combat-block .value-large:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        .combat-block .value-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .combat-block .value-row input {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            outline: none;
+            width: 60px;
+            font-family: var(--font-sans);
+            text-align: center;
+        }
+        .combat-block .value-row input:focus {
+            border-color: var(--accent);
+        }
+        .combat-block .value-row .label-sm {
+            font-size: 0.65rem;
+            opacity: 0.5;
+        }
+
+        .combat-block .shield-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 6px;
+        }
+        .shield-row label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .shield-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        /* AC special */
+        .ac-block {
+            position: relative;
+        }
+        .ac-block .ac-value {
+            font-size: 2.4rem;
+            font-weight: 700;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            text-align: center;
+            padding: 4px 0;
+        }
+        .ac-block .ac-edit-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: opacity var(--transition);
+            color: var(--text);
+        }
+        .ac-block .ac-edit-btn:hover {
+            opacity: 1;
+        }
+
+        /* Death saves */
+        .death-saves {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .death-saves .ds-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .death-saves .ds-row .ds-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.5;
+            min-width: 50px;
+        }
+        .death-saves .ds-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .death-saves .ds-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--accent);
+        }
+        .death-saves .ds-dot.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .death-saves .ds-dot:hover {
+            border-color: var(--accent);
+        }
+
+        /* Hit dice */
+        .hitdice-select {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            outline: none;
+            font-family: var(--font-sans);
+        }
+        .hitdice-select:focus {
+            border-color: var(--accent);
+        }
+
+        /* ===== Divider ===== */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 10px 0 16px;
+            color: var(--border);
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .divider span {
+            font-family: var(--font-serif);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.5;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        /* ===== Stats Column ===== */
+        .stats-col .stat-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .stats-col .stat-card:hover {
+            border-color: var(--accent);
+        }
+        .stats-col .stat-card .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .stats-col .stat-card .stat-name {
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: var(--font-sans);
+        }
+        .stats-col .stat-card .stat-mod {
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            min-width: 40px;
+            text-align: center;
+        }
+        .stats-col .stat-card .stat-value {
+            font-size: 0.75rem;
+            opacity: 0.5;
+            text-align: center;
+            min-width: 30px;
+        }
+        .stats-col .stat-card .stat-skills {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .stats-col .stat-card .skill-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+        }
+        .stats-col .stat-card .skill-row .skill-check {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            flex-shrink: 0;
+            background: transparent;
+        }
+        .stats-col .stat-card .skill-row .skill-check.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .stats-col .stat-card .skill-row .skill-check.active::after {
+            content: '✓';
+            color: #fff;
+            font-size: 0.5rem;
+        }
+        .stats-col .stat-card .skill-row .skill-mod {
+            font-weight: 600;
+            min-width: 24px;
+            text-align: right;
+            font-size: 0.7rem;
+            color: var(--accent);
+        }
+        .stats-col .stat-card .skill-row .skill-name {
+            opacity: 0.7;
+            flex: 1;
+        }
+
+        /* ===== Extra params ===== */
+        .extra-params {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .extra-params .ep-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .extra-params .ep-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+        .extra-params .exhaustion-dots {
+            display: flex;
+            gap: 4px;
+        }
+        .extra-params .exhaustion-dots .edot {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            transition: all var(--transition);
+            border-radius: 2px;
+        }
+        .extra-params .exhaustion-dots .edot.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .extra-params .inspiration-box {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--border);
+            border-radius: 50% 50% 50% 0;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-45deg);
+        }
+        .extra-params .inspiration-box.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .extra-params .inspiration-box.active::after {
+            content: '★';
+            color: #fff;
+            font-size: 0.9rem;
+            transform: rotate(45deg);
+        }
+
+        /* Proficiencies */
+        .prof-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 16px;
+            margin-top: 8px;
+        }
+        .prof-grid .prof-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+        }
+        .prof-grid .prof-item input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .prof-grid .prof-item label {
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        /* Tools & Languages */
+        .tools-area {
+            position: relative;
+            margin-top: 8px;
+        }
+        .tools-area textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            outline: none;
+            resize: vertical;
+            min-height: 50px;
+            font-family: var(--font-sans);
+        }
+        .tools-area textarea:focus {
+            border-color: var(--accent);
+        }
+        .tools-area .zoom-controls {
+            position: absolute;
+            bottom: 6px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+        }
+        .tools-area .zoom-controls button {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            width: 22px;
+            height: 22px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+        .tools-area .zoom-controls button:hover {
+            background: var(--border);
+        }
+
+        /* ===== Weapons Table ===== */
+        .weapons-table-wrap {
+            position: relative;
+        }
+        .weapons-table-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        .weapons-table-wrap th {
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.6rem;
+            opacity: 0.6;
+            letter-spacing: 0.5px;
+            padding: 4px 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .weapons-table-wrap td {
+            padding: 3px 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .weapons-table-wrap input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 0.75rem;
+            outline: none;
+            width: 100%;
+            padding: 2px 0;
+            font-family: var(--font-sans);
+        }
+        .weapons-table-wrap input:focus {
+            border-bottom: 1px solid var(--accent);
+        }
+        .weapons-table-wrap .weapon-remove {
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.9rem;
+            opacity: 0.4;
+            transition: opacity var(--transition);
+        }
+        .weapons-table-wrap .weapon-remove:hover {
+            opacity: 1;
+        }
+        .weapons-table-wrap .table-controls {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            justify-content: flex-end;
+        }
+        .weapons-table-wrap .table-controls button {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .weapons-table-wrap .table-controls button:hover {
+            background: var(--border);
+        }
+
+        /* ===== Textareas with grid ===== */
+        .grid-textarea-wrap {
+            position: relative;
+        }
+        .grid-textarea-wrap textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            outline: none;
+            resize: vertical;
+            min-height: 100px;
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            background-image:
+                linear-gradient(rgba(200, 190, 180, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200, 190, 180, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: -1px -1px;
+            transition: background-size 0.2s;
+        }
+        .grid-textarea-wrap textarea:focus {
+            border-color: var(--accent);
+        }
+        .grid-textarea-wrap .grid-zoom {
+            position: absolute;
+            bottom: 6px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+        }
+        .grid-textarea-wrap .grid-zoom button {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            width: 24px;
+            height: 24px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+        .grid-textarea-wrap .grid-zoom button:hover {
+            background: var(--border);
+        }
+        .grid-textarea-wrap .edit-icon {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            font-size: 0.8rem;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        /* ===== Modals ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: modalFade 0.2s ease;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes modalFade {
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal {
+            background: var(--card);
+            color: var(--text);
+            max-width: 560px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px 28px;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 18px;
+            font-size: 1.6rem;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: opacity var(--transition);
+            background: none;
+            border: none;
+            color: var(--text);
+            line-height: 1;
+        }
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-right: 30px;
+        }
+        .modal-header .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        .modal-header .modal-sub {
+            font-size: 0.75rem;
+            opacity: 0.6;
+        }
+        .modal-header .modal-badge {
+            background: var(--input-bg);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            text-align: center;
+        }
+        .modal-header .modal-badge .badge-val {
+            font-size: 1.6rem;
+            font-weight: 700;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            line-height: 1;
+        }
+        .modal-header .modal-badge .badge-label {
+            font-size: 0.45rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.5;
+            letter-spacing: 0.3px;
+        }
+
+        .modal-section {
+            margin-bottom: 16px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .modal-section .section-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.5;
+            margin-bottom: 8px;
+        }
+
+        .modal .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-bottom: 10px;
+        }
+        .modal .form-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.6;
+            letter-spacing: 0.3px;
+        }
+        .modal .form-group input,
+        .modal .form-group select {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            outline: none;
+            font-family: var(--font-sans);
+            width: 100%;
+        }
+        .modal .form-group input:focus,
+        .modal .form-group select:focus {
+            border-color: var(--accent);
+        }
+        .modal .form-group .formula-input {
+            border-color: #8b6b9b;
+            background: rgba(139, 107, 155, 0.08);
+        }
+        .modal .form-group .formula-input:focus {
+            border-color: var(--accent);
+        }
+        .modal .form-group .formula-hint {
+            font-size: 0.65rem;
+            opacity: 0.4;
+            font-family: var(--font-sans);
+        }
+
+        /* Segmented control */
+        .seg-control {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            background: var(--input-bg);
+        }
+        .seg-control button {
+            background: transparent;
+            border: none;
+            padding: 4px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+            opacity: 0.5;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .seg-control button.active {
+            background: var(--accent);
+            color: #fff;
+            opacity: 1;
+        }
+        .seg-control button:not(.active):hover {
+            background: var(--border);
+            opacity: 0.7;
+        }
+        .seg-control button .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 1px solid currentColor;
+        }
+        .seg-control button .dot.filled {
+            background: currentColor;
+        }
+
+        /* Bonus items in modal */
+        .bonus-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .bonus-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--input-bg);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        .bonus-item input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 0.8rem;
+            outline: none;
+            padding: 2px 0;
+            min-width: 40px;
+        }
+        .bonus-item input:focus {
+            border-bottom: 1px solid var(--accent);
+        }
+        .bonus-item .bonus-remove {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.9rem;
+            opacity: 0.4;
+            transition: opacity var(--transition);
+        }
+        .bonus-item .bonus-remove:hover {
+            opacity: 1;
+        }
+        .bonus-item select {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 0.7rem;
+            padding: 2px 4px;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .add-bonus-btn {
+            border: 1px dashed var(--border);
+            background: transparent;
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            width: 100%;
+            text-align: center;
+            font-weight: 600;
+            opacity: 0.6;
+            font-family: var(--font-sans);
+        }
+        .add-bonus-btn:hover {
+            background: var(--border);
+            opacity: 1;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+        .modal-actions .btn {
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            border: none;
+            font-family: var(--font-sans);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .modal-actions .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .modal-actions .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+        .modal-actions .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .modal-actions .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--accent);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 3000;
+            font-weight: 600;
+            font-size: 0.9rem;
+            font-family: var(--font-sans);
+            max-width: 90vw;
+        }
+
+        /* ===== Utilities ===== */
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .mb-8 {
+            margin-bottom: 8px;
+        }
+        .gap-8 {
+            gap: 8px;
+        }
+        .flex {
+            display: flex;
+        }
+        .flex-center {
+            display: flex;
+            align-items: center;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+        .w-full {
+            width: 100%;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .op-5 {
+            opacity: 0.5;
+        }
+        .op-7 {
+            opacity: 0.7;
+        }
+
+        /* ===== Responsive tweaks ===== */
+        @media (max-width: 480px) {
+            .passport-grid {
+                grid-template-columns: 1fr;
+            }
+            .combat-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal {
+                padding: 18px 16px;
+            }
+            .page-header h1 {
+                font-size: 1.2rem;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+
+        /* ===== Proficiencies extra ===== */
+        .prof-check {
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all var(--transition);
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .prof-check.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .prof-check.active::after {
+            content: '✓';
+            color: #fff;
+            font-size: 0.5rem;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>Лист Персонажа RPG</h1>
-        <button class="theme-toggle" id="themeToggle">Тёмная тема</button>
-    </header>
+    <div class="container">
 
-    <!-- Панель синхронизации -->
-    <div class="sync-panel">
-        <div class="sync-header" id="syncHeader">
-            <span class="sync-title">⚙️ Настройка синхронизации с GitHub</span>
-            <span id="syncStatus" style="font-size: 0.9rem; color: var(--accent-color);">Локальный режим</span>
+        <!-- ===== HEADER ===== -->
+        <header class="page-header">
+            <h1>Классический заполняемый лист персонажа</h1>
+            <div class="header-actions">
+                <div class="rule-toggle" id="ruleToggle">
+                    <button class="active" data-rule="2014">2014</button>
+                    <button data-rule="2024">2024</button>
+                </div>
+                <button class="header-btn" id="shareBtn"><span class="icon">🔗</span> Поделиться</button>
+                <button class="header-btn" id="settingsBtn"><span class="icon">⚙️</span> Настройки</button>
+                <button class="theme-toggle-btn" id="themeToggle">🌙 Тёмная</button>
+            </div>
+        </header>
+
+        <!-- ===== SYNC PANEL ===== -->
+        <div class="sync-panel">
+            <div class="sync-header" id="syncHeader">
+                <span class="sync-title">☁️ Настройка синхронизации с GitHub</span>
+                <span class="sync-status" id="syncStatus">Локальный режим</span>
+            </div>
+            <div class="sync-content" id="syncContent">
+                <div class="form-group">
+                    <label>Пользователь GitHub</label>
+                    <input type="text" id="ghUser" placeholder="username" />
+                </div>
+                <div class="form-group">
+                    <label>Личный токен (PAT)</label>
+                    <input type="password" id="ghToken" placeholder="github_pat_..." />
+                </div>
+                <div class="form-group" style="justify-content:flex-end;">
+                    <button class="header-btn" id="saveSettingsBtn" style="padding:6px 16px;">Сохранить</button>
+                </div>
+            </div>
         </div>
-        <div class="sync-content" id="syncContent">
-            <div class="form-group">
-                <label for="ghUser">Пользователь GitHub</label>
-                <input type="text" id="ghUser" placeholder="username">
+
+        <!-- ===== SHEET GRID ===== -->
+        <div class="sheet-grid">
+
+            <!-- ===== LEFT COLUMN ===== -->
+            <div class="col-left">
+
+                <!-- Passport -->
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="passport-grid">
+                        <div class="form-group full-width">
+                            <label>Имя персонажа</label>
+                            <input type="text" id="charName" value="Новый Герой" />
+                        </div>
+                        <div class="form-group">
+                            <label>Предыстория</label>
+                            <input type="text" id="charBackground" placeholder="История..." />
+                        </div>
+                        <div class="form-group">
+                            <label>Класс</label>
+                            <input type="text" id="charClass" placeholder="Воин..." />
+                        </div>
+                        <div class="form-group">
+                            <label>Вид / Раса</label>
+                            <input type="text" id="charRace" placeholder="Человек..." />
+                        </div>
+                        <div class="form-group">
+                            <label>Подкласс</label>
+                            <input type="text" id="charSubclass" placeholder="Боевой маг..." />
+                        </div>
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <div class="passport-level">
+                                <div class="level-circle">
+                                    <span class="lvl-num" id="levelDisplay">1</span>
+                                    <span class="lvl-label">Уровень</span>
+                                </div>
+                                <div class="level-xp-group">
+                                    <label>Опыт (XP)</label>
+                                    <input type="number" id="charXP" value="0" min="0" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Combat Stats -->
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="combat-grid">
+                        <!-- AC -->
+                        <div class="combat-block ac-block">
+                            <span class="label">Класс защиты (КД)</span>
+                            <div class="ac-value" id="acDisplay">10</div>
+                            <button class="ac-edit-btn" id="openAcModal">⚙️</button>
+                            <div class="shield-row">
+                                <label><input type="checkbox" id="shieldToggle" /> Щит</label>
+                            </div>
+                        </div>
+                        <!-- HP -->
+                        <div class="combat-block">
+                            <span class="label">Хиты (HP)</span>
+                            <input type="number" class="value-large" id="hpCurrent" value="10" min="0" />
+                            <div class="value-row" style="justify-content:space-between;margin-top:4px;">
+                                <span class="label-sm">Врем.</span>
+                                <input type="number" id="hpTemp" value="0" min="0" style="width:50px;" />
+                                <span class="label-sm">Макс.</span>
+                                <input type="number" id="hpMax" value="10" min="1" style="width:50px;" />
+                            </div>
+                        </div>
+                        <!-- Hit Dice -->
+                        <div class="combat-block">
+                            <span class="label">Кости хитов</span>
+                            <div class="value-row" style="justify-content:space-between;">
+                                <span id="hdDisplay" style="font-weight:700;font-size:1rem;">1 / 1</span>
+                                <select class="hitdice-select" id="hdType">
+                                    <option value="d6">d6</option>
+                                    <option value="d8" selected>d8</option>
+                                    <option value="d10">d10</option>
+                                    <option value="d12">d12</option>
+                                </select>
+                            </div>
+                            <div class="value-row" style="justify-content:space-between;margin-top:4px;">
+                                <span class="label-sm">Текущие</span>
+                                <input type="number" id="hdCurrent" value="1" min="0" style="width:50px;" />
+                            </div>
+                        </div>
+                        <!-- Death Saves -->
+                        <div class="combat-block">
+                            <span class="label">Спасброски от смерти</span>
+                            <div class="death-saves">
+                                <div class="ds-row">
+                                    <span class="ds-label">Успехи</span>
+                                    <div class="ds-dots" id="deathSuccesses">
+                                        <span class="ds-dot" data-index="0"></span>
+                                        <span class="ds-dot" data-index="1"></span>
+                                        <span class="ds-dot" data-index="2"></span>
+                                    </div>
+                                </div>
+                                <div class="ds-row">
+                                    <span class="ds-label">Провалы</span>
+                                    <div class="ds-dots" id="deathFailures">
+                                        <span class="ds-dot" data-index="0"></span>
+                                        <span class="ds-dot" data-index="1"></span>
+                                        <span class="ds-dot" data-index="2"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="divider"><span>Long Story Short</span></div>
+
+                <!-- Stats Column -->
+                <div class="stats-col" id="statsColumn">
+                    <!-- Stat cards will be rendered by JS -->
+                </div>
+
+                <!-- Extra params -->
+                <div class="card" style="margin-top:16px;">
+                    <div class="extra-params">
+                        <div class="ep-group">
+                            <label>Истощение</label>
+                            <div class="exhaustion-dots" id="exhaustionDots">
+                                <span class="edot" data-index="0"></span>
+                                <span class="edot" data-index="1"></span>
+                                <span class="edot" data-index="2"></span>
+                                <span class="edot" data-index="3"></span>
+                                <span class="edot" data-index="4"></span>
+                                <span class="edot" data-index="5"></span>
+                            </div>
+                        </div>
+                        <div class="ep-group">
+                            <label>Вдохновение</label>
+                            <span class="inspiration-box" id="inspirationBox"></span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+                        <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;opacity:0.5;margin-bottom:6px;">Владение доспехами</div>
+                        <div class="prof-grid">
+                            <div class="prof-item"><input type="checkbox" id="profArmorLight" /> <label>Лёгкие</label></div>
+                            <div class="prof-item"><input type="checkbox" id="profArmorMedium" /> <label>Средние</label></div>
+                            <div class="prof-item"><input type="checkbox" id="profArmorHeavy" /> <label>Тяжёлые</label></div>
+                            <div class="prof-item"><input type="checkbox" id="profArmorShield" /> <label>Щит</label></div>
+                        </div>
+                        <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;opacity:0.5;margin:8px 0 4px;">Владение оружием</div>
+                        <div class="prof-grid">
+                            <div class="prof-item"><input type="checkbox" id="profWeaponSimple" /> <label>Простое</label></div>
+                            <div class="prof-item"><input type="checkbox" id="profWeaponMartial" /> <label>Воинское</label></div>
+                            <div class="prof-item"><input type="checkbox" id="profWeaponOther" /> <label>Другое</label></div>
+                        </div>
+                        <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;opacity:0.5;margin:8px 0 4px;">Инструменты и языки</div>
+                        <div class="tools-area">
+                            <textarea id="toolsLanguages" placeholder="Инструменты, языки..."></textarea>
+                            <div class="zoom-controls">
+                                <button data-zoom="-1">−</button>
+                                <button data-zoom="1">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-            <div class="form-group">
-                <label for="ghToken">Личный токен доступа (PAT)</label>
-                <input type="password" id="ghToken" placeholder="github_pat_...">
+
+            <!-- ===== CENTER COLUMN ===== -->
+            <div class="col-center">
+
+                <!-- Weapons -->
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="card-title">Оружие и боевые заговоры</div>
+                    <div class="weapons-table-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>Название</th><th>Бонус / Сложность</th><th>Урон / Вид</th><th>Заметки</th><th style="width:28px;"></th></tr>
+                            </thead>
+                            <tbody id="weaponsBody">
+                                <!-- rendered by JS -->
+                            </tbody>
+                        </table>
+                        <div class="table-controls">
+                            <button id="weaponAdd">+</button>
+                            <button id="weaponRemove">−</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Class Abilities -->
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="card-title">Способности класса</div>
+                    <div class="grid-textarea-wrap">
+                        <textarea id="classAbilities" placeholder="Описание классовых умений..."></textarea>
+                        <span class="edit-icon">✏️</span>
+                        <div class="grid-zoom">
+                            <button data-zoom="-1">−</button>
+                            <button data-zoom="1">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Racial Features -->
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="card-title">Видовые особенности</div>
+                    <div class="grid-textarea-wrap">
+                        <textarea id="racialFeatures" placeholder="Особенности расы..."></textarea>
+                        <span class="edit-icon">✏️</span>
+                        <div class="grid-zoom">
+                            <button data-zoom="-1">−</button>
+                            <button data-zoom="1">+</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-            <div class="form-group" style="justify-content: flex-end;">
-                <button class="btn" id="saveSettingsBtn" style="padding: 8px 12px;">Сохранить настройки</button>
+
+            <!-- ===== RIGHT COLUMN ===== -->
+            <div class="col-right">
+
+                <!-- Feats -->
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="card-title">Черты</div>
+                    <div class="grid-textarea-wrap">
+                        <textarea id="feats" placeholder="Черты и особенности..."></textarea>
+                        <span class="edit-icon">✏️</span>
+                        <div class="grid-zoom">
+                            <button data-zoom="-1">−</button>
+                            <button data-zoom="1">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action bar -->
+                <div class="card">
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <button class="header-btn" id="saveCloudBtn" style="flex:1;justify-content:center;">☁️ Сохранить на GitHub</button>
+                        <button class="header-btn" id="loadCloudBtn" style="flex:1;justify-content:center;">🔄 Загрузить с GitHub</button>
+                        <button class="header-btn" id="downloadBtn" style="flex:1;justify-content:center;">💾 Скачать .JSON</button>
+                        <button class="header-btn" id="uploadBtn" style="flex:1;justify-content:center;">📂 Выбрать файл</button>
+                        <input type="file" id="localFileInput" accept=".json" style="display:none;" />
+                    </div>
+                </div>
+
+            </div>
+
+        </div><!-- /sheet-grid -->
+
+    </div><!-- /container -->
+
+    <!-- ===== MODAL: AC ===== -->
+    <div class="modal-overlay" id="acModalOverlay">
+        <div class="modal">
+            <button class="modal-close" id="acModalClose">&times;</button>
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">Класс защиты</div>
+                    <div class="modal-sub">Базовое значение + бонусы</div>
+                </div>
+                <div class="modal-badge">
+                    <span class="badge-val" id="acModalBadge">10</span>
+                    <span class="badge-label">КД</span>
+                </div>
+            </div>
+            <div class="modal-section">
+                <div class="section-title">Значение</div>
+                <div class="form-group">
+                    <label>Базовое значение</label>
+                    <input type="text" id="acBaseInput" value="10" class="formula-input" />
+                    <span class="formula-hint">Используйте [STR], [DEX], [CON], [INT], [WIS], [CHA] для модификаторов</span>
+                </div>
+            </div>
+            <div class="modal-section">
+                <div class="section-title">Щит</div>
+                <div class="seg-control" id="shieldSeg">
+                    <button class="active" data-value="false"><span class="dot"></span> Нет</button>
+                    <button data-value="true"><span class="dot filled"></span> Да</button>
+                </div>
+                <div id="shieldBonusArea" style="margin-top:10px;display:none;">
+                    <div class="form-group">
+                        <label>Бонус щита</label>
+                        <input type="number" id="shieldBonusInput" value="2" min="0" step="0.5" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-section">
+                <div class="section-title">Дополнительные бонусы</div>
+                <div class="bonus-list" id="acBonusList"></div>
+                <button class="add-bonus-btn" id="acAddBonus">+ Добавить бонус</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="acModalCancel">Закрыть</button>
+                <button class="btn btn-primary" id="acModalSave">Сохранить</button>
             </div>
         </div>
     </div>
 
-    <!-- Основной лист -->
-    <div class="char-sheet">
-        <!-- Левая колонка: Характеристики -->
-        <aside class="card">
-            <h2 class="card-title">Характеристики</h2>
-            <div class="stats-grid">
-                <div class="stat-block">
-                    <span class="stat-name">Сила (STR)</span>
-                    <input type="number" class="stat-val" id="stat-str" value="10" min="1" max="30">
-                    <div class="stat-mod" id="mod-str">+0</div>
+    <!-- ===== MODAL: Stat ===== -->
+    <div class="modal-overlay" id="statModalOverlay">
+        <div class="modal">
+            <button class="modal-close" id="statModalClose">&times;</button>
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="statModalTitle">Сила</div>
+                    <div class="modal-sub" id="statModalSub">Значение 10, Спасбросок +0</div>
                 </div>
-                <div class="stat-block">
-                    <span class="stat-name">Ловкость (DEX)</span>
-                    <input type="number" class="stat-val" id="stat-dex" value="10" min="1" max="30">
-                    <div class="stat-mod" id="mod-dex">+0</div>
-                </div>
-                <div class="stat-block">
-                    <span class="stat-name">Телосложение (CON)</span>
-                    <input type="number" class="stat-val" id="stat-con" value="10" min="1" max="30">
-                    <div class="stat-mod" id="mod-con">+0</div>
-                </div>
-                <div class="stat-block">
-                    <span class="stat-name">Интеллект (INT)</span>
-                    <input type="number" class="stat-val" id="stat-int" value="10" min="1" max="30">
-                    <div class="stat-mod" id="mod-int">+0</div>
-                </div>
-                <div class="stat-block">
-                    <span class="stat-name">Мудрость (WIS)</span>
-                    <input type="number" class="stat-val" id="stat-wis" value="10" min="1" max="30">
-                    <div class="stat-mod" id="mod-wis">+0</div>
-                </div>
-                <div class="stat-block">
-                    <span class="stat-name">Харизма (CHA)</span>
-                    <input type="number" class="stat-val" id="stat-cha" value="10" min="1" max="30">
-                    <div class="stat-mod" id="mod-cha">+0</div>
+                <div class="modal-badge">
+                    <span class="badge-val" id="statModalBadge">+0</span>
+                    <span class="badge-label">Модификатор</span>
                 </div>
             </div>
-        </aside>
-
-        <!-- Правая колонка: три блока -->
-        <main style="display: flex; flex-direction: column; gap: 20px;">
-            <!-- Блок 1: Имя, Предыстория, Вид/раса, Класс, Подкласс -->
-            <div class="card">
-                <h2 class="card-title">Основная информация</h2>
-                <div class="info-grid">
-                    <div class="form-group">
-                        <label for="charName">Имя персонажа</label>
-                        <input type="text" id="charName" value="Новый Герой">
-                    </div>
-                    <div class="form-group">
-                        <label for="charRace">Вид / Раса</label>
-                        <input type="text" id="charRace" placeholder="Человек, Эльф...">
-                    </div>
-                    <div class="form-group">
-                        <label for="charClass">Класс</label>
-                        <input type="text" id="charClass" placeholder="Воин, Маг...">
-                    </div>
-                    <div class="form-group">
-                        <label for="charSubclass">Подкласс</label>
-                        <input type="text" id="charSubclass" placeholder="Боевой маг, Ловкач...">
-                    </div>
-                    <div class="form-group full-width">
-                        <label for="charBackground">Предыстория</label>
-                        <textarea id="charBackground" rows="3" placeholder="История вашего героя..."></textarea>
-                    </div>
+            <div class="modal-section">
+                <div class="section-title">Значение</div>
+                <div class="form-group">
+                    <label>Базовое значение</label>
+                    <input type="number" id="statModalValue" value="10" min="1" max="30" />
                 </div>
             </div>
-
-            <!-- Блок 2: Опыт и Уровень -->
-            <div class="card">
-                <h2 class="card-title">Опыт и Уровень</h2>
-                <div class="level-block">
-                    <div class="form-group">
-                        <label for="charXP">Опыт (XP)</label>
-                        <input type="number" id="charXP" value="0" min="0">
-                    </div>
-                    <div style="text-align: center;">
-                        <label>Уровень</label>
-                        <div class="level-display" id="charLevelDisplay">1</div>
-                    </div>
+            <div class="modal-section">
+                <div class="section-title">Спасбросок</div>
+                <div class="seg-control" id="statSaveSeg">
+                    <button class="active" data-value="false"><span class="dot"></span> Нет</button>
+                    <button data-value="true"><span class="dot filled"></span> Владение</button>
                 </div>
             </div>
-
-            <!-- Блок 3: Класс Доспехов -->
-            <div class="card">
-                <h2 class="card-title">Класс Доспехов (AC)</h2>
-                <div class="ac-display">
-                    <span class="ac-value" id="acDisplay">10</span>
-                    <button class="btn" id="openAcModal">⚙️ Настроить</button>
+            <div class="modal-section" id="statPassiveSection" style="display:none;">
+                <div class="section-title">Пассивные чувства</div>
+                <div class="form-group">
+                    <label>Пассив. Восприятие</label>
+                    <input type="text" id="statPassivePerception" value="10" class="formula-input" />
                 </div>
+                <div class="form-group">
+                    <label>Пассив. Проницательность</label>
+                    <input type="text" id="statPassiveInsight" value="10" class="formula-input" />
+                </div>
+                <div class="bonus-list" id="statPassiveBonuses"></div>
+                <button class="add-bonus-btn" id="statAddPassiveBonus">+ Добавить бонус</button>
             </div>
-
-            <!-- Панель действий (сохранение/загрузка) -->
-            <div class="action-bar">
-                <button class="btn" id="saveCloudBtn">☁️ Сохранить на GitHub</button>
-                <button class="btn btn-secondary" id="loadCloudBtn">🔄 Загрузить с GitHub</button>
-                <button class="btn btn-secondary" id="downloadBtn">💾 Скачать .JSON</button>
-                <button class="btn btn-secondary" id="uploadBtn">📂 Выбрать файл</button>
-                <input type="file" id="localFileInput" accept=".json" style="display: none;">
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="statModalCancel">Закрыть</button>
+                <button class="btn btn-primary" id="statModalSave">Сохранить</button>
             </div>
-        </main>
-    </div>
-</div>
-
-<!-- Модальное окно для настройки КД -->
-<div class="modal-overlay" id="acModalOverlay">
-    <div class="modal">
-        <span class="modal-close" id="acModalClose">&times;</span>
-        <h2>Настройка Класса Доспехов</h2>
-        <div class="form-group">
-            <label for="baseAC">Базовый КД</label>
-            <input type="number" id="baseAC" value="10" min="0">
-        </div>
-        <div style="margin: 15px 0;">
-            <label>Бонусы</label>
-            <div id="bonusList"></div>
-            <button class="btn btn-secondary" id="addBonusBtn" style="margin-top: 10px;">+ Добавить бонус</button>
-        </div>
-        <div class="modal-actions">
-            <button class="btn" id="saveAcSettings">Сохранить</button>
-            <button class="btn btn-secondary" id="closeAcModal">Закрыть</button>
         </div>
     </div>
-</div>
 
-<div class="toast" id="toast">Уведомление</div>
+    <!-- ===== TOAST ===== -->
+    <div class="toast" id="toast">Уведомление</div>
 
-<script>
-    // ---- 1. Тема ----
-    let theme = localStorage.getItem('theme') || 'light';
-    if (theme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        document.getElementById('themeToggle').innerText = 'Светлая тема';
-    }
-    document.getElementById('themeToggle').addEventListener('click', () => {
-        if (document.documentElement.getAttribute('data-theme') === 'dark') {
-            document.documentElement.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'light');
-            document.getElementById('themeToggle').innerText = 'Тёмная тема';
-        } else {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-            document.getElementById('themeToggle').innerText = 'Светлая тема';
-        }
-    });
+    <script>
+        // ============================================================
+        //  DATA MODEL
+        // ============================================================
+        const STAT_IDS = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+        const STAT_NAMES = {
+            str: 'Сила',
+            dex: 'Ловкость',
+            con: 'Телосложение',
+            int: 'Интеллект',
+            wis: 'Мудрость',
+            cha: 'Харизма'
+        };
+        const STAT_SKILLS = {
+            str: ['Спасбросок', 'Атлетика'],
+            dex: ['Спасбросок', 'Акробатика', 'Ловкость рук', 'Скрытность'],
+            con: ['Спасбросок'],
+            int: ['Спасбросок', 'Анализ', 'История', 'Магия', 'Природа', 'Религия'],
+            wis: ['Спасбросок', 'Восприятие', 'Выживание', 'Медицина', 'Проницательность', 'Уход за животными'],
+            cha: ['Спасбросок', 'Выступление', 'Запугивание', 'Обман', 'Убеждение']
+        };
 
-    // ---- 2. Характеристики и модификаторы ----
-    const statIds = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
-    function getStatMod(stat) {
-        const val = parseInt(document.getElementById(`stat-${stat}`).value) || 10;
-        return Math.floor((val - 10) / 2);
-    }
-    function updateModifiers() {
-        statIds.forEach(stat => {
-            const mod = getStatMod(stat);
-            document.getElementById(`mod-${stat}`).innerText = mod >= 0 ? `+${mod}` : `${mod}`;
-        });
-        // При изменении характеристик пересчитываем AC, если используются бонусы от характеристик
-        recalcAC();
-        // Также пересчитываем уровень (опыт не изменился, но на всякий случай)
-        recalcLevel();
-    }
-    statIds.forEach(stat => {
-        document.getElementById(`stat-${stat}`).addEventListener('input', updateModifiers);
-    });
-    updateModifiers();
+        const XP_TABLE = [
+            { level: 1, xp: 0 },
+            { level: 2, xp: 300 },
+            { level: 3, xp: 900 },
+            { level: 4, xp: 2700 },
+            { level: 5, xp: 6500 },
+            { level: 6, xp: 14000 },
+            { level: 7, xp: 23000 },
+            { level: 8, xp: 34000 },
+            { level: 9, xp: 48000 },
+            { level: 10, xp: 64000 },
+            { level: 11, xp: 85000 },
+            { level: 12, xp: 100000 },
+            { level: 13, xp: 120000 },
+            { level: 14, xp: 140000 },
+            { level: 15, xp: 165000 },
+            { level: 16, xp: 195000 },
+            { level: 17, xp: 225000 },
+            { level: 18, xp: 265000 },
+            { level: 19, xp: 305000 },
+            { level: 20, xp: 355000 }
+        ];
 
-    // ---- 3. Опыт и уровень ----
-    const xpTable = [
-        { level: 1, xp: 0 },
-        { level: 2, xp: 300 },
-        { level: 3, xp: 900 },
-        { level: 4, xp: 2700 },
-        { level: 5, xp: 6500 },
-        { level: 6, xp: 14000 },
-        { level: 7, xp: 23000 },
-        { level: 8, xp: 34000 },
-        { level: 9, xp: 48000 },
-        { level: 10, xp: 64000 },
-        { level: 11, xp: 85000 },
-        { level: 12, xp: 100000 },
-        { level: 13, xp: 120000 },
-        { level: 14, xp: 140000 },
-        { level: 15, xp: 165000 },
-        { level: 16, xp: 195000 },
-        { level: 17, xp: 225000 },
-        { level: 18, xp: 265000 },
-        { level: 19, xp: 305000 },
-        { level: 20, xp: 355000 }
-    ];
-
-    function recalcLevel() {
-        const xp = parseInt(document.getElementById('charXP').value) || 0;
-        let level = 1;
-        for (let i = xpTable.length - 1; i >= 0; i--) {
-            if (xp >= xpTable[i].xp) {
-                level = xpTable[i].level;
-                break;
-            }
-        }
-        document.getElementById('charLevelDisplay').innerText = level;
-        // Сохраним уровень в скрытое поле для экспорта (опционально)
-        return level;
-    }
-    document.getElementById('charXP').addEventListener('input', recalcLevel);
-    recalcLevel();
-
-    // ---- 4. Класс Доспехов (AC) ----
-    // Структура данных: { base: 10, bonuses: [ { name: '', type: 'fixed'|'stat', value: 0, stat: 'dex' } ] }
-    let acData = {
-        base: 10,
-        bonuses: []
-    };
-
-    // Загрузка сохранённых настроек AC
-    function loadACData() {
-        const saved = localStorage.getItem('ac_settings');
-        if (saved) {
-            try {
-                acData = JSON.parse(saved);
-            } catch(e) { console.warn('Ошибка парсинга AC', e); }
-        }
-    }
-    loadACData();
-
-    function recalcAC() {
-        let total = acData.base || 0;
-        acData.bonuses.forEach(bonus => {
-            if (bonus.type === 'fixed') {
-                total += (parseFloat(bonus.value) || 0);
-            } else if (bonus.type === 'stat' && bonus.stat) {
-                total += getStatMod(bonus.stat);
-            }
-        });
-        document.getElementById('acDisplay').innerText = total;
-        // Сохраняем в локальное хранилище при каждом пересчёте
-        localStorage.setItem('ac_settings', JSON.stringify(acData));
-        // Также отметим, что данные изменились для автосохранения
-        saveToLocalStorage();
-    }
-
-    // Рендеринг списка бонусов в модалке
-    function renderBonusList() {
-        const container = document.getElementById('bonusList');
-        container.innerHTML = '';
-        acData.bonuses.forEach((bonus, index) => {
-            const div = document.createElement('div');
-            div.className = 'bonus-item';
-            div.innerHTML = `
-                <input type="text" placeholder="Название" value="${bonus.name || ''}" data-index="${index}" data-field="name">
-                <select data-index="${index}" data-field="type">
-                    <option value="fixed" ${bonus.type === 'fixed' ? 'selected' : ''}>Фиксированный</option>
-                    <option value="stat" ${bonus.type === 'stat' ? 'selected' : ''}>Характеристика</option>
-                </select>
-                <input type="number" placeholder="Значение" value="${bonus.value || 0}" data-index="${index}" data-field="value" ${bonus.type === 'stat' ? 'style="display:none;"' : ''}>
-                <select data-index="${index}" data-field="stat" ${bonus.type !== 'stat' ? 'style="display:none;"' : ''}>
-                    ${statIds.map(s => `<option value="${s}" ${bonus.stat === s ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
-                </select>
-                <button class="remove-btn" data-index="${index}">✕</button>
-            `;
-            container.appendChild(div);
-        });
-
-        // Обработчики событий для элементов бонусов
-        container.querySelectorAll('input[data-field="name"]').forEach(inp => {
-            inp.addEventListener('input', (e) => {
-                const idx = parseInt(e.target.dataset.index);
-                acData.bonuses[idx].name = e.target.value;
-                recalcAC();
-            });
-        });
-        container.querySelectorAll('select[data-field="type"]').forEach(sel => {
-            sel.addEventListener('change', (e) => {
-                const idx = parseInt(e.target.dataset.index);
-                const type = e.target.value;
-                acData.bonuses[idx].type = type;
-                // Показать/скрыть соответствующие поля
-                const item = e.target.closest('.bonus-item');
-                const fixedInput = item.querySelector('input[data-field="value"]');
-                const statSelect = item.querySelector('select[data-field="stat"]');
-                if (type === 'fixed') {
-                    fixedInput.style.display = 'block';
-                    statSelect.style.display = 'none';
-                } else {
-                    fixedInput.style.display = 'none';
-                    statSelect.style.display = 'block';
-                }
-                recalcAC();
-            });
-        });
-        container.querySelectorAll('input[data-field="value"]').forEach(inp => {
-            inp.addEventListener('input', (e) => {
-                const idx = parseInt(e.target.dataset.index);
-                acData.bonuses[idx].value = parseFloat(e.target.value) || 0;
-                recalcAC();
-            });
-        });
-        container.querySelectorAll('select[data-field="stat"]').forEach(sel => {
-            sel.addEventListener('change', (e) => {
-                const idx = parseInt(e.target.dataset.index);
-                acData.bonuses[idx].stat = e.target.value;
-                recalcAC();
-            });
-        });
-        container.querySelectorAll('.remove-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const idx = parseInt(e.target.dataset.index);
-                acData.bonuses.splice(idx, 1);
-                renderBonusList();
-                recalcAC();
-            });
-        });
-    }
-
-    // Добавление бонуса
-    document.getElementById('addBonusBtn').addEventListener('click', () => {
-        acData.bonuses.push({ name: '', type: 'fixed', value: 0, stat: 'dex' });
-        renderBonusList();
-        recalcAC();
-    });
-
-    // Открытие/закрытие модалки
-    const modalOverlay = document.getElementById('acModalOverlay');
-    document.getElementById('openAcModal').addEventListener('click', () => {
-        // Загружаем текущие данные в поля модалки
-        document.getElementById('baseAC').value = acData.base || 10;
-        renderBonusList();
-        modalOverlay.classList.add('active');
-    });
-    document.getElementById('closeAcModal').addEventListener('click', () => {
-        modalOverlay.classList.remove('active');
-    });
-    document.getElementById('acModalClose').addEventListener('click', () => {
-        modalOverlay.classList.remove('active');
-    });
-    modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) modalOverlay.classList.remove('active');
-    });
-
-    // Сохранение настроек AC из модалки
-    document.getElementById('saveAcSettings').addEventListener('click', () => {
-        const base = parseInt(document.getElementById('baseAC').value) || 0;
-        acData.base = base;
-        // Бонусы уже обновляются через события input, но пересчитаем на всякий
-        recalcAC();
-        modalOverlay.classList.remove('active');
-        showToast('Настройки КД сохранены!');
-    });
-
-    // Инициализация отображения AC
-    recalcAC();
-
-    // ---- 5. Сбор данных в JSON ----
-    function getCharacterJSON() {
-        const charData = {
-            name: document.getElementById('charName').value,
-            race: document.getElementById('charRace').value,
-            class: document.getElementById('charClass').value,
-            subclass: document.getElementById('charSubclass').value,
-            background: document.getElementById('charBackground').value,
-            xp: parseInt(document.getElementById('charXP').value) || 0,
-            level: parseInt(document.getElementById('charLevelDisplay').innerText) || 1,
+        // Main state
+        let state = {
+            name: 'Новый Герой',
+            background: '',
+            class: '',
+            race: '',
+            subclass: '',
+            xp: 0,
             stats: {},
-            ac: {
-                base: acData.base,
-                bonuses: acData.bonuses.map(b => ({...b})) // копия
-            }
+            skills: {},
+            ac: { base: 10, bonuses: [], shield: false, shieldBonus: 2 },
+            hp: { current: 10, temp: 0, max: 10 },
+            hitDice: { type: 'd8', current: 1 },
+            deathSaves: { successes: 0, failures: 0 },
+            exhaustion: 0,
+            inspiration: false,
+            profArmor: { light: false, medium: false, heavy: false, shield: false },
+            profWeapon: { simple: false, martial: false, other: false },
+            toolsLanguages: '',
+            weapons: [],
+            classAbilities: '',
+            racialFeatures: '',
+            feats: '',
+            passivePerception: 10,
+            passiveInsight: 10,
+            passiveBonuses: [],
+            proficiencyBonus: 2,
+            ruleSet: '2014'
         };
-        statIds.forEach(stat => {
-            charData.stats[stat] = parseInt(document.getElementById(`stat-${stat}`).value) || 10;
-        });
-        return charData;
-    }
 
-    // ---- 6. Загрузка данных в поля ----
-    function setCharacterFields(data) {
-        if (!data) return;
-        if (data.name) document.getElementById('charName').value = data.name;
-        if (data.race) document.getElementById('charRace').value = data.race;
-        if (data.class) document.getElementById('charClass').value = data.class;
-        if (data.subclass) document.getElementById('charSubclass').value = data.subclass;
-        if (data.background) document.getElementById('charBackground').value = data.background;
-        if (data.xp !== undefined) document.getElementById('charXP').value = data.xp;
-        // Уровень пересчитается автоматически
-        if (data.stats) {
-            statIds.forEach(stat => {
-                if (data.stats[stat] !== undefined) {
-                    document.getElementById(`stat-${stat}`).value = data.stats[stat];
+        // Initialize stats
+        STAT_IDS.forEach(id => {
+            state.stats[id] = { value: 10, proficient: false };
+            STAT_SKILLS[id].forEach(skill => {
+                const key = `${id}_${skill}`;
+                state.skills[key] = { proficient: false, bonus: 0 };
+            });
+        });
+
+        // Initial weapon
+        state.weapons = [
+            { name: 'Короткий меч', bonus: '+3', damage: '1d6+3', notes: 'Фехтование' }
+        ];
+
+        // ============================================================
+        //  HELPERS
+        // ============================================================
+        function getStatValue(id) { return state.stats[id]?.value ?? 10; }
+
+        function getStatMod(id) {
+            const v = getStatValue(id);
+            return Math.floor((v - 10) / 2);
+        }
+
+        function getProficiencyBonus() { return state.proficiencyBonus || 2; }
+
+        function calcSkillMod(statId, skillName) {
+            const key = `${statId}_${skillName}`;
+            const sk = state.skills[key];
+            if (!sk) return getStatMod(statId);
+            let mod = getStatMod(statId);
+            if (sk.proficient) mod += getProficiencyBonus();
+            if (sk.bonus) mod += sk.bonus;
+            return mod;
+        }
+
+        function calcSaveMod(statId) {
+            const prof = state.stats[statId]?.proficient || false;
+            let mod = getStatMod(statId);
+            if (prof) mod += getProficiencyBonus();
+            return mod;
+        }
+
+        function calcLevel(xp) {
+            let lvl = 1;
+            for (let i = XP_TABLE.length - 1; i >= 0; i--) {
+                if (xp >= XP_TABLE[i].xp) { lvl = XP_TABLE[i].level; break; }
+            }
+            return lvl;
+        }
+
+        function calcAC() {
+            let total = parseFloat(state.ac.base) || 0;
+            if (state.ac.shield) total += parseFloat(state.ac.shieldBonus) || 0;
+            state.ac.bonuses.forEach(b => {
+                if (b.type === 'fixed') total += parseFloat(b.value) || 0;
+                else if (b.type === 'stat' && b.stat) total += getStatMod(b.stat);
+            });
+            return total;
+        }
+
+        function evaluateFormula(formula) {
+            if (!formula) return 0;
+            let s = String(formula);
+            // Replace [STAT] with mod
+            STAT_IDS.forEach(id => {
+                const mod = getStatMod(id);
+                s = s.replace(new RegExp(`\\[${id.toUpperCase()}\\]`, 'gi'), String(mod));
+            });
+            // Replace [PB] with proficiency bonus
+            s = s.replace(/\[PB\]/gi, String(getProficiencyBonus()));
+            // Clean and evaluate
+            try {
+                // Only allow numbers, +, -, *, /, (, ), ., and spaces
+                if (/^[\d+\-*/().\s]+$/.test(s)) {
+                    return Function('"use strict"; return (' + s + ')')();
                 }
+                return parseFloat(s) || 0;
+            } catch (e) { return parseFloat(s) || 0; }
+        }
+
+        // ============================================================
+        //  RENDER FUNCTIONS
+        // ============================================================
+
+        function renderStats() {
+            const container = document.getElementById('statsColumn');
+            container.innerHTML = '';
+            STAT_IDS.forEach(id => {
+                const mod = getStatMod(id);
+                const saveMod = calcSaveMod(id);
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                card.dataset.stat = id;
+                let skillsHtml = '';
+                STAT_SKILLS[id].forEach(skill => {
+                    const isSave = skill === 'Спасбросок';
+                    const modVal = isSave ? calcSaveMod(id) : calcSkillMod(id, skill);
+                    const key = `${id}_${skill}`;
+                    const prof = state.skills[key]?.proficient || false;
+                    const sign = modVal >= 0 ? '+' : '';
+                    skillsHtml += `
+                        <div class="skill-row">
+                            <span class="skill-check ${prof ? 'active' : ''}" data-stat="${id}" data-skill="${skill}"></span>
+                            <span class="skill-mod">${sign}${modVal}</span>
+                            <span class="skill-name">${skill}</span>
+                        </div>
+                    `;
+                });
+                card.innerHTML = `
+                    <div class="stat-header">
+                        <span class="stat-name">${STAT_NAMES[id]}</span>
+                        <span class="stat-mod">${mod >= 0 ? '+' : ''}${mod}</span>
+                        <span class="stat-value">${getStatValue(id)}</span>
+                    </div>
+                    <div class="stat-skills">${skillsHtml}</div>
+                `;
+                card.addEventListener('click', (e) => {
+                    // Don't open modal if clicking on a skill check
+                    if (e.target.closest('.skill-check')) return;
+                    openStatModal(id);
+                });
+                // Skill check toggles
+                card.querySelectorAll('.skill-check').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const statId = el.dataset.stat;
+                        const skillName = el.dataset.skill;
+                        const key = `${statId}_${skillName}`;
+                        if (state.skills[key]) {
+                            state.skills[key].proficient = !state.skills[key].proficient;
+                            renderAll();
+                            saveToLocalStorage();
+                        }
+                    });
+                });
+                container.appendChild(card);
             });
         }
-        if (data.ac) {
-            acData.base = data.ac.base || 10;
-            acData.bonuses = data.ac.bonuses ? data.ac.bonuses.map(b => ({...b})) : [];
-            recalcAC();
+
+        function renderWeapons() {
+            const tbody = document.getElementById('weaponsBody');
+            tbody.innerHTML = '';
+            state.weapons.forEach((w, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input type="text" value="${w.name || ''}" data-index="${idx}" data-field="name" placeholder="Название" /></td>
+                    <td><input type="text" value="${w.bonus || ''}" data-index="${idx}" data-field="bonus" placeholder="+0" /></td>
+                    <td><input type="text" value="${w.damage || ''}" data-index="${idx}" data-field="damage" placeholder="1d6" /></td>
+                    <td><input type="text" value="${w.notes || ''}" data-index="${idx}" data-field="notes" placeholder="Заметки" /></td>
+                    <td><button class="weapon-remove" data-index="${idx}">✕</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            // Attach events
+            tbody.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    const field = e.target.dataset.field;
+                    if (!isNaN(idx) && state.weapons[idx]) {
+                        state.weapons[idx][field] = e.target.value;
+                        saveToLocalStorage();
+                    }
+                });
+            });
+            tbody.querySelectorAll('.weapon-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    if (!isNaN(idx) && state.weapons.length > 1) {
+                        state.weapons.splice(idx, 1);
+                        renderWeapons();
+                        saveToLocalStorage();
+                    } else {
+                        showToast('Нужна хотя бы одна запись');
+                    }
+                });
+            });
         }
-        updateModifiers(); // обновит модификаторы и пересчитает AC (если нужно)
-        recalcLevel();
-        saveToLocalStorage();
-    }
 
-    // ---- 7. Локальное автосохранение ----
-    function saveToLocalStorage() {
-        localStorage.setItem('current_character', JSON.stringify(getCharacterJSON()));
-    }
-    // Подписка на изменения всех полей
-    document.querySelectorAll('.char-sheet input, .char-sheet textarea, .char-sheet select').forEach(el => {
-        el.addEventListener('input', saveToLocalStorage);
-    });
-    // Дополнительно при изменении AC через модалку уже вызывается recalcAC, который вызывает saveToLocalStorage
+        function renderAll() {
+            // Level
+            const lvl = calcLevel(state.xp);
+            document.getElementById('levelDisplay').textContent = lvl;
+            document.getElementById('charXP').value = state.xp;
 
-    // Загрузка при старте
-    window.addEventListener('DOMContentLoaded', () => {
-        const localChar = localStorage.getItem('current_character');
-        if (localChar) {
-            try { setCharacterFields(JSON.parse(localChar)); } catch(e) { console.error(e); }
+            // Name
+            document.getElementById('charName').value = state.name;
+
+            // Stats
+            STAT_IDS.forEach(id => {
+                // The stat cards are rendered via renderStats, but we also update the values in the modal if open
+            });
+            renderStats();
+
+            // AC
+            const ac = calcAC();
+            document.getElementById('acDisplay').textContent = Math.round(ac);
+            document.getElementById('shieldToggle').checked = state.ac.shield;
+
+            // HP
+            document.getElementById('hpCurrent').value = state.hp.current;
+            document.getElementById('hpTemp').value = state.hp.temp;
+            document.getElementById('hpMax').value = state.hp.max;
+
+            // Hit Dice
+            document.getElementById('hdType').value = state.hitDice.type;
+            document.getElementById('hdCurrent').value = state.hitDice.current;
+            const totalHD = calcLevel(state.xp);
+            document.getElementById('hdDisplay').textContent = `${state.hitDice.current} / ${totalHD}`;
+
+            // Death saves
+            document.querySelectorAll('#deathSuccesses .ds-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i < state.deathSaves.successes);
+            });
+            document.querySelectorAll('#deathFailures .ds-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i < state.deathSaves.failures);
+            });
+
+            // Exhaustion
+            document.querySelectorAll('#exhaustionDots .edot').forEach((dot, i) => {
+                dot.classList.toggle('active', i < state.exhaustion);
+            });
+
+            // Inspiration
+            document.getElementById('inspirationBox').classList.toggle('active', state.inspiration);
+
+            // Proficiencies
+            document.getElementById('profArmorLight').checked = state.profArmor.light;
+            document.getElementById('profArmorMedium').checked = state.profArmor.medium;
+            document.getElementById('profArmorHeavy').checked = state.profArmor.heavy;
+            document.getElementById('profArmorShield').checked = state.profArmor.shield;
+            document.getElementById('profWeaponSimple').checked = state.profWeapon.simple;
+            document.getElementById('profWeaponMartial').checked = state.profWeapon.martial;
+            document.getElementById('profWeaponOther').checked = state.profWeapon.other;
+
+            // Tools & Languages
+            document.getElementById('toolsLanguages').value = state.toolsLanguages;
+
+            // Weapons
+            renderWeapons();
+
+            // Textareas
+            document.getElementById('classAbilities').value = state.classAbilities;
+            document.getElementById('racialFeatures').value = state.racialFeatures;
+            document.getElementById('feats').value = state.feats;
         }
-    });
 
-    // ---- 8. Уведомления (тост) ----
-    function showToast(text) {
-        const toast = document.getElementById('toast');
-        toast.innerText = text;
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 3000);
-    }
-
-    // ---- 9. Работа с локальными файлами ----
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-        const data = getCharacterJSON();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${data.name.toLowerCase().replace(/\s+/g, '_')}_sheet.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Файл .JSON скачан!');
-    });
-
-    const fileInput = document.getElementById('localFileInput');
-    document.getElementById('uploadBtn').addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(evt) {
+        // ============================================================
+        //  LOCAL STORAGE
+        // ============================================================
+        function saveToLocalStorage() {
             try {
-                setCharacterFields(JSON.parse(evt.target.result));
-                showToast('Лист импортирован!');
-            } catch (err) {
-                alert('Неверный формат файла!');
+                localStorage.setItem('char_sheet_state', JSON.stringify(state));
+            } catch (e) { /* ignore */ }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const raw = localStorage.getItem('char_sheet_state');
+                if (raw) {
+                    const saved = JSON.parse(raw);
+                    // Deep merge
+                    Object.keys(saved).forEach(key => {
+                        if (key === 'stats' && saved.stats) {
+                            Object.keys(saved.stats).forEach(sid => {
+                                if (state.stats[sid]) {
+                                    state.stats[sid].value = saved.stats[sid].value ?? 10;
+                                    state.stats[sid].proficient = saved.stats[sid].proficient ?? false;
+                                }
+                            });
+                        } else if (key === 'skills' && saved.skills) {
+                            Object.keys(saved.skills).forEach(sk => {
+                                if (state.skills[sk]) {
+                                    state.skills[sk].proficient = saved.skills[sk].proficient ?? false;
+                                    state.skills[sk].bonus = saved.skills[sk].bonus ?? 0;
+                                }
+                            });
+                        } else if (key === 'ac' && saved.ac) {
+                            state.ac.base = saved.ac.base ?? 10;
+                            state.ac.bonuses = saved.ac.bonuses || [];
+                            state.ac.shield = saved.ac.shield ?? false;
+                            state.ac.shieldBonus = saved.ac.shieldBonus ?? 2;
+                        } else if (key === 'hp' && saved.hp) {
+                            state.hp.current = saved.hp.current ?? 10;
+                            state.hp.temp = saved.hp.temp ?? 0;
+                            state.hp.max = saved.hp.max ?? 10;
+                        } else if (key === 'hitDice' && saved.hitDice) {
+                            state.hitDice.type = saved.hitDice.type || 'd8';
+                            state.hitDice.current = saved.hitDice.current ?? 1;
+                        } else if (key === 'deathSaves' && saved.deathSaves) {
+                            state.deathSaves.successes = saved.deathSaves.successes ?? 0;
+                            state.deathSaves.failures = saved.deathSaves.failures ?? 0;
+                        } else if (key === 'weapons' && Array.isArray(saved.weapons)) {
+                            state.weapons = saved.weapons.length ? saved.weapons : state.weapons;
+                        } else if (key === 'profArmor' && saved.profArmor) {
+                            Object.assign(state.profArmor, saved.profArmor);
+                        } else if (key === 'profWeapon' && saved.profWeapon) {
+                            Object.assign(state.profWeapon, saved.profWeapon);
+                        } else if (key === 'passiveBonuses' && Array.isArray(saved.passiveBonuses)) {
+                            state.passiveBonuses = saved.passiveBonuses;
+                        } else if (key in state && key !== 'stats' && key !== 'skills' && key !== 'ac' && key !== 'hp' &&
+                            key !== 'hitDice' && key !== 'deathSaves' && key !== 'weapons' && key !== 'profArmor' &&
+                            key !== 'profWeapon' && key !== 'passiveBonuses') {
+                            state[key] = saved[key];
+                        }
+                    });
+                }
+            } catch (e) { console.warn('Load state error', e); }
+        }
+
+        // ============================================================
+        //  MODAL: STAT
+        // ============================================================
+        let currentStatModalId = 'str';
+
+        function openStatModal(statId) {
+            currentStatModalId = statId;
+            const s = state.stats[statId];
+            if (!s) return;
+            document.getElementById('statModalTitle').textContent = STAT_NAMES[statId];
+            document.getElementById('statModalValue').value = s.value;
+            const mod = getStatMod(statId);
+            document.getElementById('statModalBadge').textContent = mod >= 0 ? '+' + mod : String(mod);
+            document.getElementById('statModalSub').textContent =
+                `Значение ${s.value}, Спасбросок ${calcSaveMod(statId) >= 0 ? '+' : ''}${calcSaveMod(statId)}`;
+
+            // Save proficiency toggle
+            const seg = document.getElementById('statSaveSeg');
+            seg.querySelectorAll('button').forEach(btn => {
+                const val = btn.dataset.value === 'true';
+                btn.classList.toggle('active', s.proficient === val);
+            });
+
+            // Show passive section for WIS only
+            const passiveSection = document.getElementById('statPassiveSection');
+            if (statId === 'wis') {
+                passiveSection.style.display = 'block';
+                document.getElementById('statPassivePerception').value = state.passivePerception || 10;
+                document.getElementById('statPassiveInsight').value = state.passiveInsight || 10;
+                renderPassiveBonuses();
+            } else {
+                passiveSection.style.display = 'none';
             }
-        };
-        reader.readAsText(file);
-        fileInput.value = '';
-    });
 
-    // ---- 10. GitHub синхронизация (репозиторий фиксирован) ----
-    const REPO_NAME = 'Fox-s-Character-Sheet';
+            document.getElementById('statModalOverlay').classList.add('active');
+        }
 
-    async function getGitSettings() {
-        const settings = JSON.parse(localStorage.getItem('github_sync_settings') || '{}');
-        if (!settings.user || !settings.token) {
-            showToast('⚠️ Настройте пользователя и токен в меню сверху!');
-            document.getElementById('syncContent').classList.add('active');
+        function renderPassiveBonuses() {
+            const container = document.getElementById('statPassiveBonuses');
+            container.innerHTML = '';
+            state.passiveBonuses.forEach((b, idx) => {
+                const div = document.createElement('div');
+                div.className = 'bonus-item';
+                div.innerHTML = `
+                    <input type="text" placeholder="Название" value="${b.name || ''}" data-pb-idx="${idx}" data-pb-field="name" />
+                    <input type="number" placeholder="Значение" value="${b.value || 0}" data-pb-idx="${idx}" data-pb-field="value" style="width:60px;" />
+                    <button class="bonus-remove" data-pb-idx="${idx}">✕</button>
+                `;
+                container.appendChild(div);
+            });
+            container.querySelectorAll('input[data-pb-field="name"]').forEach(inp => {
+                inp.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.pbIdx);
+                    if (!isNaN(idx) && state.passiveBonuses[idx]) {
+                        state.passiveBonuses[idx].name = e.target.value;
+                        saveToLocalStorage();
+                    }
+                });
+            });
+            container.querySelectorAll('input[data-pb-field="value"]').forEach(inp => {
+                inp.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.pbIdx);
+                    if (!isNaN(idx) && state.passiveBonuses[idx]) {
+                        state.passiveBonuses[idx].value = parseFloat(e.target.value) || 0;
+                        saveToLocalStorage();
+                    }
+                });
+            });
+            container.querySelectorAll('.bonus-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.pbIdx);
+                    if (!isNaN(idx)) {
+                        state.passiveBonuses.splice(idx, 1);
+                        renderPassiveBonuses();
+                        saveToLocalStorage();
+                    }
+                });
+            });
+        }
+
+        document.getElementById('statAddPassiveBonus').addEventListener('click', () => {
+            state.passiveBonuses.push({ name: '', value: 0 });
+            renderPassiveBonuses();
+            saveToLocalStorage();
+        });
+
+        // Stat modal save
+        document.getElementById('statModalSave').addEventListener('click', () => {
+            const id = currentStatModalId;
+            const val = parseInt(document.getElementById('statModalValue').value) || 10;
+            state.stats[id].value = val;
+            // Proficiency from seg
+            const seg = document.getElementById('statSaveSeg');
+            const activeBtn = seg.querySelector('button.active');
+            if (activeBtn) {
+                state.stats[id].proficient = activeBtn.dataset.value === 'true';
+            }
+            // Passive
+            if (id === 'wis') {
+                state.passivePerception = parseInt(document.getElementById('statPassivePerception').value) || 10;
+                state.passiveInsight = parseInt(document.getElementById('statPassiveInsight').value) || 10;
+            }
+            document.getElementById('statModalOverlay').classList.remove('active');
+            renderAll();
+            saveToLocalStorage();
+            showToast(`${STAT_NAMES[id]} обновлена`);
+        });
+
+        document.getElementById('statModalCancel').addEventListener('click', () => {
+            document.getElementById('statModalOverlay').classList.remove('active');
+        });
+        document.getElementById('statModalClose').addEventListener('click', () => {
+            document.getElementById('statModalOverlay').classList.remove('active');
+        });
+        document.getElementById('statModalOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) document.getElementById('statModalOverlay').classList.remove('active');
+        });
+
+        // Stat save seg control
+        document.getElementById('statSaveSeg').addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            document.querySelectorAll('#statSaveSeg button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+
+        // ============================================================
+        //  MODAL: AC
+        // ============================================================
+        function renderACBonuses() {
+            const container = document.getElementById('acBonusList');
+            container.innerHTML = '';
+            state.ac.bonuses.forEach((b, idx) => {
+                const div = document.createElement('div');
+                div.className = 'bonus-item';
+                div.innerHTML = `
+                    <input type="text" placeholder="Название" value="${b.name || ''}" data-ac-idx="${idx}" data-ac-field="name" />
+                    <select data-ac-idx="${idx}" data-ac-field="type">
+                        <option value="fixed" ${b.type === 'fixed' ? 'selected' : ''}>Фикс.</option>
+                        <option value="stat" ${b.type === 'stat' ? 'selected' : ''}>Стат</option>
+                    </select>
+                    <input type="number" placeholder="Знач." value="${b.value || 0}" data-ac-idx="${idx}" data-ac-field="value" style="width:50px;" ${b.type === 'stat' ? 'style="display:none;width:50px;"' : ''} />
+                    <select data-ac-idx="${idx}" data-ac-field="stat" ${b.type !== 'stat' ? 'style="display:none;"' : ''}>
+                        ${STAT_IDS.map(s => `<option value="${s}" ${b.stat === s ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
+                    </select>
+                    <button class="bonus-remove" data-ac-idx="${idx}">✕</button>
+                `;
+                container.appendChild(div);
+            });
+            // Events
+            container.querySelectorAll('input[data-ac-field="name"]').forEach(inp => {
+                inp.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.acIdx);
+                    if (!isNaN(idx) && state.ac.bonuses[idx]) {
+                        state.ac.bonuses[idx].name = e.target.value;
+                        updateACModalBadge();
+                        saveToLocalStorage();
+                    }
+                });
+            });
+            container.querySelectorAll('select[data-ac-field="type"]').forEach(sel => {
+                sel.addEventListener('change', (e) => {
+                    const idx = parseInt(e.target.dataset.acIdx);
+                    if (!isNaN(idx) && state.ac.bonuses[idx]) {
+                        state.ac.bonuses[idx].type = e.target.value;
+                        const item = e.target.closest('.bonus-item');
+                        const valInput = item.querySelector('input[data-ac-field="value"]');
+                        const statSelect = item.querySelector('select[data-ac-field="stat"]');
+                        if (e.target.value === 'fixed') {
+                            valInput.style.display = 'block';
+                            statSelect.style.display = 'none';
+                        } else {
+                            valInput.style.display = 'none';
+                            statSelect.style.display = 'block';
+                        }
+                        updateACModalBadge();
+                        saveToLocalStorage();
+                    }
+                });
+            });
+            container.querySelectorAll('input[data-ac-field="value"]').forEach(inp => {
+                inp.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.acIdx);
+                    if (!isNaN(idx) && state.ac.bonuses[idx]) {
+                        state.ac.bonuses[idx].value = parseFloat(e.target.value) || 0;
+                        updateACModalBadge();
+                        saveToLocalStorage();
+                    }
+                });
+            });
+            container.querySelectorAll('select[data-ac-field="stat"]').forEach(sel => {
+                sel.addEventListener('change', (e) => {
+                    const idx = parseInt(e.target.dataset.acIdx);
+                    if (!isNaN(idx) && state.ac.bonuses[idx]) {
+                        state.ac.bonuses[idx].stat = e.target.value;
+                        updateACModalBadge();
+                        saveToLocalStorage();
+                    }
+                });
+            });
+            container.querySelectorAll('.bonus-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.acIdx);
+                    if (!isNaN(idx)) {
+                        state.ac.bonuses.splice(idx, 1);
+                        renderACBonuses();
+                        updateACModalBadge();
+                        saveToLocalStorage();
+                    }
+                });
+            });
+        }
+
+        function updateACModalBadge() {
+            const ac = calcAC();
+            document.getElementById('acModalBadge').textContent = Math.round(ac);
+        }
+
+        document.getElementById('acAddBonus').addEventListener('click', () => {
+            state.ac.bonuses.push({ name: '', type: 'fixed', value: 0, stat: 'dex' });
+            renderACBonuses();
+            updateACModalBadge();
+            saveToLocalStorage();
+        });
+
+        document.getElementById('openAcModal').addEventListener('click', () => {
+            document.getElementById('acBaseInput').value = state.ac.base;
+            // Shield seg
+            const seg = document.getElementById('shieldSeg');
+            seg.querySelectorAll('button').forEach(btn => {
+                const val = btn.dataset.value === 'true';
+                btn.classList.toggle('active', state.ac.shield === val);
+            });
+            document.getElementById('shieldBonusInput').value = state.ac.shieldBonus;
+            document.getElementById('shieldBonusArea').style.display = state.ac.shield ? 'block' : 'none';
+            renderACBonuses();
+            updateACModalBadge();
+            document.getElementById('acModalOverlay').classList.add('active');
+        });
+
+        document.getElementById('acModalSave').addEventListener('click', () => {
+            const base = parseFloat(document.getElementById('acBaseInput').value) || 10;
+            state.ac.base = base;
+            // Shield from seg
+            const seg = document.getElementById('shieldSeg');
+            const activeBtn = seg.querySelector('button.active');
+            if (activeBtn) {
+                state.ac.shield = activeBtn.dataset.value === 'true';
+            }
+            state.ac.shieldBonus = parseFloat(document.getElementById('shieldBonusInput').value) || 2;
+            document.getElementById('shieldBonusArea').style.display = state.ac.shield ? 'block' : 'none';
+            document.getElementById('acModalOverlay').classList.remove('active');
+            renderAll();
+            saveToLocalStorage();
+            showToast('КД обновлён');
+        });
+
+        document.getElementById('acModalCancel').addEventListener('click', () => {
+            document.getElementById('acModalOverlay').classList.remove('active');
+        });
+        document.getElementById('acModalClose').addEventListener('click', () => {
+            document.getElementById('acModalOverlay').classList.remove('active');
+        });
+        document.getElementById('acModalOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) document.getElementById('acModalOverlay').classList.remove('active');
+        });
+
+        // Shield seg control
+        document.getElementById('shieldSeg').addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            document.querySelectorAll('#shieldSeg button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const show = btn.dataset.value === 'true';
+            document.getElementById('shieldBonusArea').style.display = show ? 'block' : 'none';
+        });
+
+        // ============================================================
+        //  UI EVENTS
+        // ============================================================
+
+        // Theme
+        let theme = localStorage.getItem('theme') || 'light';
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeToggle').textContent = '☀️ Светлая';
+        }
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('themeToggle').textContent = '🌙 Тёмная';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('themeToggle').textContent = '☀️ Светлая';
+            }
+        });
+
+        // Rule toggle
+        document.getElementById('ruleToggle').addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            document.querySelectorAll('#ruleToggle button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.ruleSet = btn.dataset.rule;
+            // Update proficiency bonus based on rule set
+            if (state.ruleSet === '2024') {
+                state.proficiencyBonus = 2;
+            } else {
+                state.proficiencyBonus = 2;
+            }
+            renderAll();
+            saveToLocalStorage();
+            showToast(`Правила ${state.ruleSet}`);
+        });
+
+        // Name input
+        document.getElementById('charName').addEventListener('input', (e) => {
+            state.name = e.target.value;
+            saveToLocalStorage();
+        });
+        document.getElementById('charBackground').addEventListener('input', (e) => {
+            state.background = e.target.value;
+            saveToLocalStorage();
+        });
+        document.getElementById('charClass').addEventListener('input', (e) => {
+            state.class = e.target.value;
+            saveToLocalStorage();
+        });
+        document.getElementById('charRace').addEventListener('input', (e) => {
+            state.race = e.target.value;
+            saveToLocalStorage();
+        });
+        document.getElementById('charSubclass').addEventListener('input', (e) => {
+            state.subclass = e.target.value;
+            saveToLocalStorage();
+        });
+
+        // XP
+        document.getElementById('charXP').addEventListener('input', (e) => {
+            state.xp = parseInt(e.target.value) || 0;
+            renderAll();
+            saveToLocalStorage();
+        });
+
+        // HP
+        document.getElementById('hpCurrent').addEventListener('input', (e) => {
+            state.hp.current = parseInt(e.target.value) || 0;
+            saveToLocalStorage();
+        });
+        document.getElementById('hpTemp').addEventListener('input', (e) => {
+            state.hp.temp = parseInt(e.target.value) || 0;
+            saveToLocalStorage();
+        });
+        document.getElementById('hpMax').addEventListener('input', (e) => {
+            state.hp.max = parseInt(e.target.value) || 1;
+            saveToLocalStorage();
+        });
+
+        // Hit Dice
+        document.getElementById('hdType').addEventListener('change', (e) => {
+            state.hitDice.type = e.target.value;
+            saveToLocalStorage();
+        });
+        document.getElementById('hdCurrent').addEventListener('input', (e) => {
+            state.hitDice.current = parseInt(e.target.value) || 0;
+            renderAll();
+            saveToLocalStorage();
+        });
+
+        // Shield toggle (main)
+        document.getElementById('shieldToggle').addEventListener('change', (e) => {
+            state.ac.shield = e.target.checked;
+            renderAll();
+            saveToLocalStorage();
+        });
+
+        // Death saves
+        document.querySelectorAll('#deathSuccesses .ds-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                const idx = parseInt(dot.dataset.index);
+                if (state.deathSaves.successes === idx + 1 && idx > 0) {
+                    state.deathSaves.successes = idx;
+                } else {
+                    state.deathSaves.successes = idx + 1;
+                }
+                renderAll();
+                saveToLocalStorage();
+            });
+        });
+        document.querySelectorAll('#deathFailures .ds-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                const idx = parseInt(dot.dataset.index);
+                if (state.deathSaves.failures === idx + 1 && idx > 0) {
+                    state.deathSaves.failures = idx;
+                } else {
+                    state.deathSaves.failures = idx + 1;
+                }
+                renderAll();
+                saveToLocalStorage();
+            });
+        });
+
+        // Exhaustion
+        document.querySelectorAll('#exhaustionDots .edot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                const idx = parseInt(dot.dataset.index);
+                if (state.exhaustion === idx + 1 && idx > 0) {
+                    state.exhaustion = idx;
+                } else {
+                    state.exhaustion = idx + 1;
+                }
+                renderAll();
+                saveToLocalStorage();
+            });
+        });
+
+        // Inspiration
+        document.getElementById('inspirationBox').addEventListener('click', () => {
+            state.inspiration = !state.inspiration;
+            renderAll();
+            saveToLocalStorage();
+        });
+
+        // Armor proficiencies
+        ['light', 'medium', 'heavy', 'shield'].forEach(id => {
+            document.getElementById(`profArmor${id.charAt(0).toUpperCase() + id.slice(1)}`).addEventListener('change',
+                (e) => {
+                    state.profArmor[id] = e.target.checked;
+                    saveToLocalStorage();
+                });
+        });
+        // Weapon proficiencies
+        ['simple', 'martial', 'other'].forEach(id => {
+            document.getElementById(`profWeapon${id.charAt(0).toUpperCase() + id.slice(1)}`).addEventListener('change',
+                (e) => {
+                    state.profWeapon[id] = e.target.checked;
+                    saveToLocalStorage();
+                });
+        });
+
+        // Tools & Languages
+        document.getElementById('toolsLanguages').addEventListener('input', (e) => {
+            state.toolsLanguages = e.target.value;
+            saveToLocalStorage();
+        });
+
+        // Class abilities, racial features, feats
+        document.getElementById('classAbilities').addEventListener('input', (e) => {
+            state.classAbilities = e.target.value;
+            saveToLocalStorage();
+        });
+        document.getElementById('racialFeatures').addEventListener('input', (e) => {
+            state.racialFeatures = e.target.value;
+            saveToLocalStorage();
+        });
+        document.getElementById('feats').addEventListener('input', (e) => {
+            state.feats = e.target.value;
+            saveToLocalStorage();
+        });
+
+        // Weapon add/remove
+        document.getElementById('weaponAdd').addEventListener('click', () => {
+            state.weapons.push({ name: '', bonus: '', damage: '', notes: '' });
+            renderWeapons();
+            saveToLocalStorage();
+        });
+        document.getElementById('weaponRemove').addEventListener('click', () => {
+            if (state.weapons.length > 1) {
+                state.weapons.pop();
+                renderWeapons();
+                saveToLocalStorage();
+            } else {
+                showToast('Нужна хотя бы одна запись');
+            }
+        });
+
+        // Grid zoom for textareas
+        document.querySelectorAll('.grid-textarea-wrap .grid-zoom button, .tools-area .zoom-controls button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const delta = parseInt(btn.dataset.zoom) || 0;
+                const wrap = btn.closest('.grid-textarea-wrap') || btn.closest('.tools-area');
+                const ta = wrap ? wrap.querySelector('textarea') : null;
+                if (ta) {
+                    let size = parseInt(ta.style.backgroundSize) || 20;
+                    size = Math.max(8, Math.min(60, size + delta * 2));
+                    ta.style.backgroundSize = `${size}px ${size}px`;
+                }
+            });
+        });
+
+        // ============================================================
+        //  TOAST
+        // ============================================================
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            toast.textContent = text;
+            toast.style.display = 'block';
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        // ============================================================
+        //  FILE IMPORT / EXPORT
+        // ============================================================
+        function getCharacterJSON() {
+            const data = {
+                name: state.name,
+                background: state.background,
+                class: state.class,
+                race: state.race,
+                subclass: state.subclass,
+                xp: state.xp,
+                level: calcLevel(state.xp),
+                stats: state.stats,
+                skills: state.skills,
+                ac: state.ac,
+                hp: state.hp,
+                hitDice: state.hitDice,
+                deathSaves: state.deathSaves,
+                exhaustion: state.exhaustion,
+                inspiration: state.inspiration,
+                profArmor: state.profArmor,
+                profWeapon: state.profWeapon,
+                toolsLanguages: state.toolsLanguages,
+                weapons: state.weapons,
+                classAbilities: state.classAbilities,
+                racialFeatures: state.racialFeatures,
+                feats: state.feats,
+                passivePerception: state.passivePerception,
+                passiveInsight: state.passiveInsight,
+                passiveBonuses: state.passiveBonuses,
+                proficiencyBonus: state.proficiencyBonus,
+                ruleSet: state.ruleSet
+            };
+            return data;
+        }
+
+        function setCharacterJSON(data) {
+            if (!data) return;
+            Object.keys(data).forEach(key => {
+                if (key === 'stats' && data.stats) {
+                    Object.keys(data.stats).forEach(sid => {
+                        if (state.stats[sid]) {
+                            state.stats[sid].value = data.stats[sid].value ?? 10;
+                            state.stats[sid].proficient = data.stats[sid].proficient ?? false;
+                        }
+                    });
+                } else if (key === 'skills' && data.skills) {
+                    Object.keys(data.skills).forEach(sk => {
+                        if (state.skills[sk]) {
+                            state.skills[sk].proficient = data.skills[sk].proficient ?? false;
+                            state.skills[sk].bonus = data.skills[sk].bonus ?? 0;
+                        }
+                    });
+                } else if (key === 'ac' && data.ac) {
+                    state.ac.base = data.ac.base ?? 10;
+                    state.ac.bonuses = data.ac.bonuses || [];
+                    state.ac.shield = data.ac.shield ?? false;
+                    state.ac.shieldBonus = data.ac.shieldBonus ?? 2;
+                } else if (key === 'hp' && data.hp) {
+                    state.hp.current = data.hp.current ?? 10;
+                    state.hp.temp = data.hp.temp ?? 0;
+                    state.hp.max = data.hp.max ?? 10;
+                } else if (key === 'hitDice' && data.hitDice) {
+                    state.hitDice.type = data.hitDice.type || 'd8';
+                    state.hitDice.current = data.hitDice.current ?? 1;
+                } else if (key === 'deathSaves' && data.deathSaves) {
+                    state.deathSaves.successes = data.deathSaves.successes ?? 0;
+                    state.deathSaves.failures = data.deathSaves.failures ?? 0;
+                } else if (key === 'weapons' && Array.isArray(data.weapons)) {
+                    state.weapons = data.weapons.length ? data.weapons : state.weapons;
+                } else if (key === 'profArmor' && data.profArmor) {
+                    Object.assign(state.profArmor, data.profArmor);
+                } else if (key === 'profWeapon' && data.profWeapon) {
+                    Object.assign(state.profWeapon, data.profWeapon);
+                } else if (key === 'passiveBonuses' && Array.isArray(data.passiveBonuses)) {
+                    state.passiveBonuses = data.passiveBonuses;
+                } else if (key in state && key !== 'stats' && key !== 'skills' && key !== 'ac' && key !== 'hp' &&
+                    key !== 'hitDice' && key !== 'deathSaves' && key !== 'weapons' && key !== 'profArmor' &&
+                    key !== 'profWeapon' && key !== 'passiveBonuses') {
+                    state[key] = data[key];
+                }
+            });
+            renderAll();
+            saveToLocalStorage();
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const data = getCharacterJSON();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${state.name.toLowerCase().replace(/\s+/g, '_')}_sheet.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Файл .JSON скачан');
+        });
+
+        document.getElementById('uploadBtn').addEventListener('click', () => {
+            document.getElementById('localFileInput').click();
+        });
+        document.getElementById('localFileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    setCharacterJSON(data);
+                    showToast('Лист импортирован!');
+                } catch (err) {
+                    alert('Неверный формат файла');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+
+        // ============================================================
+        //  GITHUB SYNC
+        // ============================================================
+        const REPO_NAME = 'Fox-s-Character-Sheet';
+
+        function getGitSettings() {
+            const raw = localStorage.getItem('github_sync_settings');
+            if (!raw) return null;
+            try {
+                const s = JSON.parse(raw);
+                if (s.user && s.token) return s;
+            } catch (e) { /* ignore */ }
             return null;
         }
-        return { user: settings.user, repo: REPO_NAME, token: settings.token };
-    }
 
-    // Сохранение настроек GitHub
-    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-        const settings = {
-            user: document.getElementById('ghUser').value.trim(),
-            token: document.getElementById('ghToken').value.trim()
-        };
-        localStorage.setItem('github_sync_settings', JSON.stringify(settings));
-        showToast('Конфигурация GitHub сохранена!');
-        document.getElementById('syncContent').classList.remove('active');
-        updateSyncStatus();
-    });
-
-    function updateSyncStatus() {
-        const user = document.getElementById('ghUser').value;
-        const token = document.getElementById('ghToken').value;
-        const statusEl = document.getElementById('syncStatus');
-        if (user && token) {
-            statusEl.innerText = '☁️ Готов к синхронизации';
-            statusEl.style.color = 'var(--success-color)';
-        } else {
-            statusEl.innerText = 'Локальный режим';
-            statusEl.style.color = 'var(--accent-color)';
-        }
-    }
-    // Загружаем сохранённые настройки при старте
-    (function loadSyncSettings() {
-        const settings = JSON.parse(localStorage.getItem('github_sync_settings') || '{}');
-        if (settings.user) document.getElementById('ghUser').value = settings.user;
-        if (settings.token) document.getElementById('ghToken').value = settings.token;
-        updateSyncStatus();
-    })();
-
-    // Сохранение на GitHub
-    document.getElementById('saveCloudBtn').addEventListener('click', async () => {
-        const settings = await getGitSettings();
-        if (!settings) return;
-
-        const characterData = getCharacterJSON();
-        const charFileName = `${characterData.name.toLowerCase().trim().replace(/\s+/g, '_')}.json`;
-        const url = `https://api.github.com/repos/${settings.user}/${settings.repo}/contents/database/${charFileName}`;
-        
-        showToast('Идёт отправка на GitHub...');
-
-        const utf8Bytes = new TextEncoder().encode(JSON.stringify(characterData, null, 2));
-        const base64Content = btoa(String.fromCharCode(...utf8Bytes));
-
-        let currentSha = null;
-        try {
-            const checkRes = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${settings.token}` }
-            });
-            if (checkRes.ok) {
-                const fileMeta = await checkRes.json();
-                currentSha = fileMeta.sha;
-            }
-        } catch (e) { /* файл новый */ }
-
-        const body = {
-            message: `Save character sheet: ${characterData.name}`,
-            content: base64Content
-        };
-        if (currentSha) body.sha = currentSha;
-
-        try {
-            const saveRes = await fetch(url, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${settings.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
-            });
-            if (saveRes.ok) {
-                showToast('🎉 Персонаж сохранён в репозиторий!');
+        function updateSyncStatus() {
+            const settings = getGitSettings();
+            const el = document.getElementById('syncStatus');
+            if (settings) {
+                el.textContent = '☁️ Готов к синхронизации';
+                el.style.color = 'var(--success)';
             } else {
-                const errJson = await saveRes.json();
-                alert('Ошибка GitHub API: ' + (errJson.message || 'Проверьте токен и права доступа'));
+                el.textContent = 'Локальный режим';
+                el.style.color = '';
             }
-        } catch (error) {
-            alert('Сетевая ошибка соединения с GitHub');
         }
-    });
 
-    // Загрузка с GitHub
-    document.getElementById('loadCloudBtn').addEventListener('click', async () => {
-        const settings = await getGitSettings();
-        if (!settings) return;
-
-        const charName = document.getElementById('charName').value;
-        const charFileName = `${charName.toLowerCase().trim().replace(/\s+/g, '_')}.json`;
-        const rawUrl = `https://raw.githubusercontent.com/${settings.user}/${settings.repo}/main/database/${charFileName}?t=${Date.now()}`;
-
-        showToast('Загрузка с GitHub...');
-
-        try {
-            const res = await fetch(rawUrl);
-            if (!res.ok) {
-                throw new Error(`Персонаж database/${charFileName} не найден.`);
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+            const user = document.getElementById('ghUser').value.trim();
+            const token = document.getElementById('ghToken').value.trim();
+            if (user && token) {
+                localStorage.setItem('github_sync_settings', JSON.stringify({ user, token }));
+                updateSyncStatus();
+                showToast('Настройки GitHub сохранены');
+                document.getElementById('syncContent').classList.remove('active');
+            } else {
+                showToast('Введите пользователя и токен');
             }
-            const data = await res.json();
-            setCharacterFields(data);
-            showToast('🎉 Лист персонажа импортирован!');
-        } catch (e) {
-            alert(e.message);
+        });
+
+        document.getElementById('syncHeader').addEventListener('click', () => {
+            document.getElementById('syncContent').classList.toggle('active');
+        });
+
+        // Load saved sync settings
+        (function loadSyncSettings() {
+            const settings = getGitSettings();
+            if (settings) {
+                document.getElementById('ghUser').value = settings.user || '';
+                document.getElementById('ghToken').value = settings.token || '';
+            }
+            updateSyncStatus();
+        })();
+
+        document.getElementById('saveCloudBtn').addEventListener('click', async () => {
+            const settings = getGitSettings();
+            if (!settings) {
+                showToast('⚠️ Настройте GitHub в меню сверху');
+                document.getElementById('syncContent').classList.add('active');
+                return;
+            }
+            const data = getCharacterJSON();
+            const fileName = `${state.name.toLowerCase().trim().replace(/\s+/g, '_')}.json`;
+            const path = `database/${fileName}`;
+            const url =
+                `https://api.github.com/repos/${settings.user}/${REPO_NAME}/contents/${path}`;
+
+            showToast('Отправка на GitHub...');
+
+            const utf8 = new TextEncoder().encode(JSON.stringify(data, null, 2));
+            const base64 = btoa(String.fromCharCode(...utf8));
+
+            let sha = null;
+            try {
+                const check = await fetch(url, {
+                    headers: { Authorization: `Bearer ${settings.token}` }
+                });
+                if (check.ok) {
+                    const meta = await check.json();
+                    sha = meta.sha;
+                }
+            } catch (e) { /* new file */ }
+
+            const body = {
+                message: `Save character: ${state.name}`,
+                content: base64
+            };
+            if (sha) body.sha = sha;
+
+            try {
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        Authorization: `Bearer ${settings.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                if (res.ok) {
+                    showToast('🎉 Сохранено на GitHub!');
+                } else {
+                    const err = await res.json();
+                    alert('Ошибка GitHub: ' + (err.message || 'Проверьте токен'));
+                }
+            } catch (err) {
+                alert('Сетевая ошибка');
+            }
+        });
+
+        document.getElementById('loadCloudBtn').addEventListener('click', async () => {
+            const settings = getGitSettings();
+            if (!settings) {
+                showToast('⚠️ Настройте GitHub в меню сверху');
+                document.getElementById('syncContent').classList.add('active');
+                return;
+            }
+            const fileName = `${state.name.toLowerCase().trim().replace(/\s+/g, '_')}.json`;
+            const rawUrl =
+                `https://raw.githubusercontent.com/${settings.user}/${REPO_NAME}/main/database/${fileName}?t=${Date.now()}`;
+
+            showToast('Загрузка с GitHub...');
+
+            try {
+                const res = await fetch(rawUrl);
+                if (!res.ok) throw new Error('Файл не найден');
+                const data = await res.json();
+                setCharacterJSON(data);
+                showToast('🎉 Лист загружен!');
+            } catch (e) {
+                alert('Ошибка загрузки: ' + e.message);
+            }
+        });
+
+        // ============================================================
+        //  SHARE / SETTINGS (placeholder)
+        // ============================================================
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            const data = getCharacterJSON();
+            const json = JSON.stringify(data);
+            try {
+                const b64 = btoa(encodeURIComponent(json));
+                const url = `${window.location.origin}${window.location.pathname}?share=${b64}`;
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Ссылка скопирована!');
+                }).catch(() => {
+                    prompt('Скопируйте ссылку:', url);
+                });
+            } catch (e) {
+                showToast('Ошибка создания ссылки');
+            }
+        });
+
+        // Check for share param on load
+        (function checkShare() {
+            const params = new URLSearchParams(window.location.search);
+            const shared = params.get('share');
+            if (shared) {
+                try {
+                    const json = decodeURIComponent(atob(shared));
+                    const data = JSON.parse(json);
+                    setCharacterJSON(data);
+                    showToast('📥 Загружен шаринг');
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } catch (e) { /* ignore */ }
+            }
+        })();
+
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            document.getElementById('syncContent').classList.toggle('active');
+        });
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        loadFromLocalStorage();
+
+        // Set initial proficiency bonus based on rule set
+        if (state.ruleSet === '2024') {
+            state.proficiencyBonus = 2;
+        } else {
+            state.proficiencyBonus = 2;
         }
-    });
 
-    // Переключение панели GitHub
-    document.getElementById('syncHeader').addEventListener('click', () => {
-        document.getElementById('syncContent').classList.toggle('active');
-    });
+        renderAll();
+        updateSyncStatus();
 
-</script>
+        // If no weapons, add default
+        if (!state.weapons || state.weapons.length === 0) {
+            state.weapons = [
+                { name: 'Короткий меч', bonus: '+3', damage: '1d6+3', notes: 'Фехтование' }
+            ];
+            renderWeapons();
+            saveToLocalStorage();
+        }
+
+        // Auto-save on any change via input events already set
+
+        console.log('📜 Лист персонажа загружен');
+        console.log('💡 Нажмите на характеристику для детальной настройки');
+        console.log('💡 Нажмите на КД для настройки защиты');
+    </script>
+
 </body>
 </html>
