@@ -14,10 +14,11 @@
         <button class="theme-toggle" id="themeToggle">Тёмная тема</button>
     </header>
 
+    <!-- Панель синхронизации -->
     <div class="sync-panel">
         <div class="sync-header" id="syncHeader">
             <span class="sync-title">⚙️ Настройка синхронизации с GitHub</span>
-            <span id="syncStatus" style="font-size: 0.9rem; color: var(--accent-color);">Локальный режим (без облака)</span>
+            <span id="syncStatus" style="font-size: 0.9rem; color: var(--accent-color);">Локальный режим</span>
         </div>
         <div class="sync-content" id="syncContent">
             <div class="form-group">
@@ -34,7 +35,9 @@
         </div>
     </div>
 
+    <!-- Основной лист -->
     <div class="char-sheet">
+        <!-- Левая колонка: Характеристики -->
         <aside class="card">
             <h2 class="card-title">Характеристики</h2>
             <div class="stats-grid">
@@ -71,71 +74,101 @@
             </div>
         </aside>
 
+        <!-- Правая колонка: три блока -->
         <main style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Блок 1: Имя, Предыстория, Вид/раса, Класс, Подкласс -->
             <div class="card">
-                <h2 class="card-title">Информация</h2>
-                <div class="header-info">
+                <h2 class="card-title">Основная информация</h2>
+                <div class="info-grid">
                     <div class="form-group">
                         <label for="charName">Имя персонажа</label>
                         <input type="text" id="charName" value="Новый Герой">
                     </div>
                     <div class="form-group">
-                        <label for="charClass">Класс</label>
-                        <input type="text" id="charClass" placeholder="Рыцарь, Чародей...">
+                        <label for="charRace">Вид / Раса</label>
+                        <input type="text" id="charRace" placeholder="Человек, Эльф...">
                     </div>
                     <div class="form-group">
-                        <label for="charLevel">Уровень</label>
-                        <input type="number" id="charLevel" value="1" min="1">
+                        <label for="charClass">Класс</label>
+                        <input type="text" id="charClass" placeholder="Воин, Маг...">
                     </div>
-                </div>
-
-                <div class="combat-stats">
-                    <div class="combat-block">
-                        <label>Класс Брони (AC)</label>
-                        <input type="number" class="combat-val" id="charAC" value="10">
+                    <div class="form-group">
+                        <label for="charSubclass">Подкласс</label>
+                        <input type="text" id="charSubclass" placeholder="Боевой маг, Ловкач...">
                     </div>
-                    <div class="combat-block">
-                        <label>Здоровье (HP)</label>
-                        <input type="number" class="combat-val" id="charHP" value="10">
+                    <div class="form-group full-width">
+                        <label for="charBackground">Предыстория</label>
+                        <textarea id="charBackground" rows="3" placeholder="История вашего героя..."></textarea>
                     </div>
-                    <div class="combat-block">
-                        <label>Скорость</label>
-                        <input type="number" class="combat-val" id="charSpeed" value="30">
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-top: 15px;">
-                    <label for="charInventory">Снаряжение и Сумка</label>
-                    <textarea id="charInventory" rows="4" placeholder="Предметы, оружие..."></textarea>
-                </div>
-
-                <div class="form-group" style="margin-top: 15px;">
-                    <label for="charNotes">Предыстория и Союзники</label>
-                    <textarea id="charNotes" rows="4" placeholder="Ваша легенда..."></textarea>
-                </div>
-
-                <div class="action-bar">
-                    <button class="btn" id="saveCloudBtn">☁️ Сохранить на GitHub</button>
-                    <button class="btn btn-secondary" id="loadCloudBtn">🔄 Загрузить с GitHub</button>
-                    <button class="btn btn-secondary" id="downloadBtn">💾 Скачать .JSON</button>
-                    <button class="btn btn-secondary" id="uploadBtn">📂 Выбрать файл</button>
-                    <input type="file" id="localFileInput" accept=".json" style="display: none;">
                 </div>
             </div>
+
+            <!-- Блок 2: Опыт и Уровень -->
+            <div class="card">
+                <h2 class="card-title">Опыт и Уровень</h2>
+                <div class="level-block">
+                    <div class="form-group">
+                        <label for="charXP">Опыт (XP)</label>
+                        <input type="number" id="charXP" value="0" min="0">
+                    </div>
+                    <div style="text-align: center;">
+                        <label>Уровень</label>
+                        <div class="level-display" id="charLevelDisplay">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блок 3: Класс Доспехов -->
+            <div class="card">
+                <h2 class="card-title">Класс Доспехов (AC)</h2>
+                <div class="ac-display">
+                    <span class="ac-value" id="acDisplay">10</span>
+                    <button class="btn" id="openAcModal">⚙️ Настроить</button>
+                </div>
+            </div>
+
+            <!-- Панель действий (сохранение/загрузка) -->
+            <div class="action-bar">
+                <button class="btn" id="saveCloudBtn">☁️ Сохранить на GitHub</button>
+                <button class="btn btn-secondary" id="loadCloudBtn">🔄 Загрузить с GitHub</button>
+                <button class="btn btn-secondary" id="downloadBtn">💾 Скачать .JSON</button>
+                <button class="btn btn-secondary" id="uploadBtn">📂 Выбрать файл</button>
+                <input type="file" id="localFileInput" accept=".json" style="display: none;">
+            </div>
         </main>
+    </div>
+</div>
+
+<!-- Модальное окно для настройки КД -->
+<div class="modal-overlay" id="acModalOverlay">
+    <div class="modal">
+        <span class="modal-close" id="acModalClose">&times;</span>
+        <h2>Настройка Класса Доспехов</h2>
+        <div class="form-group">
+            <label for="baseAC">Базовый КД</label>
+            <input type="number" id="baseAC" value="10" min="0">
+        </div>
+        <div style="margin: 15px 0;">
+            <label>Бонусы</label>
+            <div id="bonusList"></div>
+            <button class="btn btn-secondary" id="addBonusBtn" style="margin-top: 10px;">+ Добавить бонус</button>
+        </div>
+        <div class="modal-actions">
+            <button class="btn" id="saveAcSettings">Сохранить</button>
+            <button class="btn btn-secondary" id="closeAcModal">Закрыть</button>
+        </div>
     </div>
 </div>
 
 <div class="toast" id="toast">Уведомление</div>
 
 <script>
-    // --- Системные настройки (Тема оформления) ---
+    // ---- 1. Тема ----
     let theme = localStorage.getItem('theme') || 'light';
     if (theme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         document.getElementById('themeToggle').innerText = 'Светлая тема';
     }
-
     document.getElementById('themeToggle').addEventListener('click', () => {
         if (document.documentElement.getAttribute('data-theme') === 'dark') {
             document.documentElement.removeAttribute('data-theme');
@@ -148,113 +181,272 @@
         }
     });
 
-    // --- Математика характеристик d20 ---
-    const stats = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+    // ---- 2. Характеристики и модификаторы ----
+    const statIds = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+    function getStatMod(stat) {
+        const val = parseInt(document.getElementById(`stat-${stat}`).value) || 10;
+        return Math.floor((val - 10) / 2);
+    }
     function updateModifiers() {
-        stats.forEach(stat => {
-            const val = parseInt(document.getElementById(`stat-${stat}`).value) || 10;
-            const mod = Math.floor((val - 10) / 2);
+        statIds.forEach(stat => {
+            const mod = getStatMod(stat);
             document.getElementById(`mod-${stat}`).innerText = mod >= 0 ? `+${mod}` : `${mod}`;
         });
+        // При изменении характеристик пересчитываем AC, если используются бонусы от характеристик
+        recalcAC();
+        // Также пересчитываем уровень (опыт не изменился, но на всякий случай)
+        recalcLevel();
     }
-    stats.forEach(stat => {
+    statIds.forEach(stat => {
         document.getElementById(`stat-${stat}`).addEventListener('input', updateModifiers);
     });
     updateModifiers();
 
-    // --- Переключение настроек GitHub ---
-    const syncHeader = document.getElementById('syncHeader');
-    const syncContent = document.getElementById('syncContent');
-    syncHeader.addEventListener('click', () => {
-        syncContent.classList.toggle('active');
-    });
+    // ---- 3. Опыт и уровень ----
+    const xpTable = [
+        { level: 1, xp: 0 },
+        { level: 2, xp: 300 },
+        { level: 3, xp: 900 },
+        { level: 4, xp: 2700 },
+        { level: 5, xp: 6500 },
+        { level: 6, xp: 14000 },
+        { level: 7, xp: 23000 },
+        { level: 8, xp: 34000 },
+        { level: 9, xp: 48000 },
+        { level: 10, xp: 64000 },
+        { level: 11, xp: 85000 },
+        { level: 12, xp: 100000 },
+        { level: 13, xp: 120000 },
+        { level: 14, xp: 140000 },
+        { level: 15, xp: 165000 },
+        { level: 16, xp: 195000 },
+        { level: 17, xp: 225000 },
+        { level: 18, xp: 265000 },
+        { level: 19, xp: 305000 },
+        { level: 20, xp: 355000 }
+    ];
 
-    function loadSyncSettings() {
-        const settings = JSON.parse(localStorage.getItem('github_sync_settings') || '{}');
-        if (settings.user) document.getElementById('ghUser').value = settings.user;
-        if (settings.token) document.getElementById('ghToken').value = settings.token;
-        updateSyncStatus();
+    function recalcLevel() {
+        const xp = parseInt(document.getElementById('charXP').value) || 0;
+        let level = 1;
+        for (let i = xpTable.length - 1; i >= 0; i--) {
+            if (xp >= xpTable[i].xp) {
+                level = xpTable[i].level;
+                break;
+            }
+        }
+        document.getElementById('charLevelDisplay').innerText = level;
+        // Сохраним уровень в скрытое поле для экспорта (опционально)
+        return level;
     }
+    document.getElementById('charXP').addEventListener('input', recalcLevel);
+    recalcLevel();
 
-    function updateSyncStatus() {
-        const user = document.getElementById('ghUser').value;
-        const token = document.getElementById('ghToken').value;
-        const statusEl = document.getElementById('syncStatus');
+    // ---- 4. Класс Доспехов (AC) ----
+    // Структура данных: { base: 10, bonuses: [ { name: '', type: 'fixed'|'stat', value: 0, stat: 'dex' } ] }
+    let acData = {
+        base: 10,
+        bonuses: []
+    };
 
-        if (user && token) {
-            statusEl.innerText = '☁️ Готов к синхронизации';
-            statusEl.style.color = 'var(--success-color)';
-        } else {
-            statusEl.innerText = 'Локальный режим (без облака)';
-            statusEl.style.color = 'var(--accent-color)';
+    // Загрузка сохранённых настроек AC
+    function loadACData() {
+        const saved = localStorage.getItem('ac_settings');
+        if (saved) {
+            try {
+                acData = JSON.parse(saved);
+            } catch(e) { console.warn('Ошибка парсинга AC', e); }
         }
     }
+    loadACData();
 
-    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-        const settings = {
-            user: document.getElementById('ghUser').value.trim(),
-            token: document.getElementById('ghToken').value.trim()
-        };
-        localStorage.setItem('github_sync_settings', JSON.stringify(settings));
-        showToast('Конфигурация GitHub сохранена локально!');
-        syncContent.classList.remove('active');
-        updateSyncStatus();
+    function recalcAC() {
+        let total = acData.base || 0;
+        acData.bonuses.forEach(bonus => {
+            if (bonus.type === 'fixed') {
+                total += (parseFloat(bonus.value) || 0);
+            } else if (bonus.type === 'stat' && bonus.stat) {
+                total += getStatMod(bonus.stat);
+            }
+        });
+        document.getElementById('acDisplay').innerText = total;
+        // Сохраняем в локальное хранилище при каждом пересчёте
+        localStorage.setItem('ac_settings', JSON.stringify(acData));
+        // Также отметим, что данные изменились для автосохранения
+        saveToLocalStorage();
+    }
+
+    // Рендеринг списка бонусов в модалке
+    function renderBonusList() {
+        const container = document.getElementById('bonusList');
+        container.innerHTML = '';
+        acData.bonuses.forEach((bonus, index) => {
+            const div = document.createElement('div');
+            div.className = 'bonus-item';
+            div.innerHTML = `
+                <input type="text" placeholder="Название" value="${bonus.name || ''}" data-index="${index}" data-field="name">
+                <select data-index="${index}" data-field="type">
+                    <option value="fixed" ${bonus.type === 'fixed' ? 'selected' : ''}>Фиксированный</option>
+                    <option value="stat" ${bonus.type === 'stat' ? 'selected' : ''}>Характеристика</option>
+                </select>
+                <input type="number" placeholder="Значение" value="${bonus.value || 0}" data-index="${index}" data-field="value" ${bonus.type === 'stat' ? 'style="display:none;"' : ''}>
+                <select data-index="${index}" data-field="stat" ${bonus.type !== 'stat' ? 'style="display:none;"' : ''}>
+                    ${statIds.map(s => `<option value="${s}" ${bonus.stat === s ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
+                </select>
+                <button class="remove-btn" data-index="${index}">✕</button>
+            `;
+            container.appendChild(div);
+        });
+
+        // Обработчики событий для элементов бонусов
+        container.querySelectorAll('input[data-field="name"]').forEach(inp => {
+            inp.addEventListener('input', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                acData.bonuses[idx].name = e.target.value;
+                recalcAC();
+            });
+        });
+        container.querySelectorAll('select[data-field="type"]').forEach(sel => {
+            sel.addEventListener('change', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                const type = e.target.value;
+                acData.bonuses[idx].type = type;
+                // Показать/скрыть соответствующие поля
+                const item = e.target.closest('.bonus-item');
+                const fixedInput = item.querySelector('input[data-field="value"]');
+                const statSelect = item.querySelector('select[data-field="stat"]');
+                if (type === 'fixed') {
+                    fixedInput.style.display = 'block';
+                    statSelect.style.display = 'none';
+                } else {
+                    fixedInput.style.display = 'none';
+                    statSelect.style.display = 'block';
+                }
+                recalcAC();
+            });
+        });
+        container.querySelectorAll('input[data-field="value"]').forEach(inp => {
+            inp.addEventListener('input', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                acData.bonuses[idx].value = parseFloat(e.target.value) || 0;
+                recalcAC();
+            });
+        });
+        container.querySelectorAll('select[data-field="stat"]').forEach(sel => {
+            sel.addEventListener('change', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                acData.bonuses[idx].stat = e.target.value;
+                recalcAC();
+            });
+        });
+        container.querySelectorAll('.remove-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                acData.bonuses.splice(idx, 1);
+                renderBonusList();
+                recalcAC();
+            });
+        });
+    }
+
+    // Добавление бонуса
+    document.getElementById('addBonusBtn').addEventListener('click', () => {
+        acData.bonuses.push({ name: '', type: 'fixed', value: 0, stat: 'dex' });
+        renderBonusList();
+        recalcAC();
     });
 
-    loadSyncSettings();
+    // Открытие/закрытие модалки
+    const modalOverlay = document.getElementById('acModalOverlay');
+    document.getElementById('openAcModal').addEventListener('click', () => {
+        // Загружаем текущие данные в поля модалки
+        document.getElementById('baseAC').value = acData.base || 10;
+        renderBonusList();
+        modalOverlay.classList.add('active');
+    });
+    document.getElementById('closeAcModal').addEventListener('click', () => {
+        modalOverlay.classList.remove('active');
+    });
+    document.getElementById('acModalClose').addEventListener('click', () => {
+        modalOverlay.classList.remove('active');
+    });
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) modalOverlay.classList.remove('active');
+    });
 
-    // --- Сбор данных с полей ---
+    // Сохранение настроек AC из модалки
+    document.getElementById('saveAcSettings').addEventListener('click', () => {
+        const base = parseInt(document.getElementById('baseAC').value) || 0;
+        acData.base = base;
+        // Бонусы уже обновляются через события input, но пересчитаем на всякий
+        recalcAC();
+        modalOverlay.classList.remove('active');
+        showToast('Настройки КД сохранены!');
+    });
+
+    // Инициализация отображения AC
+    recalcAC();
+
+    // ---- 5. Сбор данных в JSON ----
     function getCharacterJSON() {
         const charData = {
             name: document.getElementById('charName').value,
+            race: document.getElementById('charRace').value,
             class: document.getElementById('charClass').value,
-            level: parseInt(document.getElementById('charLevel').value) || 1,
-            ac: parseInt(document.getElementById('charAC').value) || 10,
-            hp: parseInt(document.getElementById('charHP').value) || 10,
-            speed: parseInt(document.getElementById('charSpeed').value) || 30,
+            subclass: document.getElementById('charSubclass').value,
+            background: document.getElementById('charBackground').value,
+            xp: parseInt(document.getElementById('charXP').value) || 0,
+            level: parseInt(document.getElementById('charLevelDisplay').innerText) || 1,
             stats: {},
-            inventory: document.getElementById('charInventory').value,
-            notes: document.getElementById('charNotes').value
+            ac: {
+                base: acData.base,
+                bonuses: acData.bonuses.map(b => ({...b})) // копия
+            }
         };
-        stats.forEach(stat => {
+        statIds.forEach(stat => {
             charData.stats[stat] = parseInt(document.getElementById(`stat-${stat}`).value) || 10;
         });
         return charData;
     }
 
-    // --- Импорт данных в поля ---
+    // ---- 6. Загрузка данных в поля ----
     function setCharacterFields(data) {
         if (!data) return;
         if (data.name) document.getElementById('charName').value = data.name;
+        if (data.race) document.getElementById('charRace').value = data.race;
         if (data.class) document.getElementById('charClass').value = data.class;
-        if (data.level) document.getElementById('charLevel').value = data.level;
-        if (data.ac) document.getElementById('charAC').value = data.ac;
-        if (data.hp) document.getElementById('charHP').value = data.hp;
-        if (data.speed) document.getElementById('charSpeed').value = data.speed;
-        
+        if (data.subclass) document.getElementById('charSubclass').value = data.subclass;
+        if (data.background) document.getElementById('charBackground').value = data.background;
+        if (data.xp !== undefined) document.getElementById('charXP').value = data.xp;
+        // Уровень пересчитается автоматически
         if (data.stats) {
-            stats.forEach(stat => {
+            statIds.forEach(stat => {
                 if (data.stats[stat] !== undefined) {
                     document.getElementById(`stat-${stat}`).value = data.stats[stat];
                 }
             });
         }
-        if (data.inventory !== undefined) document.getElementById('charInventory').value = data.inventory;
-        if (data.notes !== undefined) document.getElementById('charNotes').value = data.notes;
-        
-        updateModifiers();
+        if (data.ac) {
+            acData.base = data.ac.base || 10;
+            acData.bonuses = data.ac.bonuses ? data.ac.bonuses.map(b => ({...b})) : [];
+            recalcAC();
+        }
+        updateModifiers(); // обновит модификаторы и пересчитает AC (если нужно)
+        recalcLevel();
         saveToLocalStorage();
     }
 
-    // --- Локальное автосохранение ---
+    // ---- 7. Локальное автосохранение ----
     function saveToLocalStorage() {
         localStorage.setItem('current_character', JSON.stringify(getCharacterJSON()));
     }
-    
-    document.querySelectorAll('.char-sheet input, .char-sheet textarea').forEach(el => {
+    // Подписка на изменения всех полей
+    document.querySelectorAll('.char-sheet input, .char-sheet textarea, .char-sheet select').forEach(el => {
         el.addEventListener('input', saveToLocalStorage);
     });
+    // Дополнительно при изменении AC через модалку уже вызывается recalcAC, который вызывает saveToLocalStorage
 
+    // Загрузка при старте
     window.addEventListener('DOMContentLoaded', () => {
         const localChar = localStorage.getItem('current_character');
         if (localChar) {
@@ -262,6 +454,7 @@
         }
     });
 
+    // ---- 8. Уведомления (тост) ----
     function showToast(text) {
         const toast = document.getElementById('toast');
         toast.innerText = text;
@@ -269,7 +462,7 @@
         setTimeout(() => { toast.style.display = 'none'; }, 3000);
     }
 
-    // --- Локальные файлы ---
+    // ---- 9. Работа с локальными файлами ----
     document.getElementById('downloadBtn').addEventListener('click', () => {
         const data = getCharacterJSON();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -302,24 +495,52 @@
         fileInput.value = '';
     });
 
-    // --- РАБОТА С GITHUB API (СОХРАНЕНИЕ / ЗАГРУЗКА) ---
-    const REPO_NAME = 'Fox-s-Character-Sheet'; // жёстко заданное имя репозитория
+    // ---- 10. GitHub синхронизация (репозиторий фиксирован) ----
+    const REPO_NAME = 'Fox-s-Character-Sheet';
 
     async function getGitSettings() {
         const settings = JSON.parse(localStorage.getItem('github_sync_settings') || '{}');
         if (!settings.user || !settings.token) {
             showToast('⚠️ Настройте пользователя и токен в меню сверху!');
-            syncContent.classList.add('active');
+            document.getElementById('syncContent').classList.add('active');
             return null;
         }
-        return {
-            user: settings.user,
-            repo: REPO_NAME,
-            token: settings.token
-        };
+        return { user: settings.user, repo: REPO_NAME, token: settings.token };
     }
 
-    // Запись на GitHub (PUT)
+    // Сохранение настроек GitHub
+    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+        const settings = {
+            user: document.getElementById('ghUser').value.trim(),
+            token: document.getElementById('ghToken').value.trim()
+        };
+        localStorage.setItem('github_sync_settings', JSON.stringify(settings));
+        showToast('Конфигурация GitHub сохранена!');
+        document.getElementById('syncContent').classList.remove('active');
+        updateSyncStatus();
+    });
+
+    function updateSyncStatus() {
+        const user = document.getElementById('ghUser').value;
+        const token = document.getElementById('ghToken').value;
+        const statusEl = document.getElementById('syncStatus');
+        if (user && token) {
+            statusEl.innerText = '☁️ Готов к синхронизации';
+            statusEl.style.color = 'var(--success-color)';
+        } else {
+            statusEl.innerText = 'Локальный режим';
+            statusEl.style.color = 'var(--accent-color)';
+        }
+    }
+    // Загружаем сохранённые настройки при старте
+    (function loadSyncSettings() {
+        const settings = JSON.parse(localStorage.getItem('github_sync_settings') || '{}');
+        if (settings.user) document.getElementById('ghUser').value = settings.user;
+        if (settings.token) document.getElementById('ghToken').value = settings.token;
+        updateSyncStatus();
+    })();
+
+    // Сохранение на GitHub
     document.getElementById('saveCloudBtn').addEventListener('click', async () => {
         const settings = await getGitSettings();
         if (!settings) return;
@@ -334,7 +555,6 @@
         const base64Content = btoa(String.fromCharCode(...utf8Bytes));
 
         let currentSha = null;
-
         try {
             const checkRes = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${settings.token}` }
@@ -343,9 +563,7 @@
                 const fileMeta = await checkRes.json();
                 currentSha = fileMeta.sha;
             }
-        } catch (e) {
-            console.log('Новый файл. Создаем.');
-        }
+        } catch (e) { /* файл новый */ }
 
         const body = {
             message: `Save character sheet: ${characterData.name}`,
@@ -362,9 +580,8 @@
                 },
                 body: JSON.stringify(body)
             });
-
             if (saveRes.ok) {
-                showToast('🎉 Персонаж успешно сохранен в ваш репозиторий!');
+                showToast('🎉 Персонаж сохранён в репозиторий!');
             } else {
                 const errJson = await saveRes.json();
                 alert('Ошибка GitHub API: ' + (errJson.message || 'Проверьте токен и права доступа'));
@@ -374,14 +591,13 @@
         }
     });
 
-    // Чтение с GitHub (GET)
+    // Загрузка с GitHub
     document.getElementById('loadCloudBtn').addEventListener('click', async () => {
         const settings = await getGitSettings();
         if (!settings) return;
 
         const charName = document.getElementById('charName').value;
         const charFileName = `${charName.toLowerCase().trim().replace(/\s+/g, '_')}.json`;
-        
         const rawUrl = `https://raw.githubusercontent.com/${settings.user}/${settings.repo}/main/database/${charFileName}?t=${Date.now()}`;
 
         showToast('Загрузка с GitHub...');
@@ -389,15 +605,21 @@
         try {
             const res = await fetch(rawUrl);
             if (!res.ok) {
-                throw new Error(`Персонаж database/${charFileName} не найден. Проверьте правильность написания имени.`);
+                throw new Error(`Персонаж database/${charFileName} не найден.`);
             }
             const data = await res.json();
             setCharacterFields(data);
-            showToast('🎉 Лист персонажа успешно импортирован!');
+            showToast('🎉 Лист персонажа импортирован!');
         } catch (e) {
             alert(e.message);
         }
     });
+
+    // Переключение панели GitHub
+    document.getElementById('syncHeader').addEventListener('click', () => {
+        document.getElementById('syncContent').classList.toggle('active');
+    });
+
 </script>
 </body>
 </html>
